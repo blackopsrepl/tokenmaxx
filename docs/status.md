@@ -15,7 +15,7 @@ External service status is cached in `status.json`:
 - Gemini uses Google Cloud incident history: `https://status.cloud.google.com/incidents.json`
 - OpenCode uses the OpenCode Go usage endpoint `https://opencode.ai/zen/go/v1/usage` as the service health signal (there is no public OpenCode status page)
 - Z.ai uses the Z.ai quota endpoint `https://api.z.ai/api/monitor/usage/quota/limit` as the service health signal (there is no public Z.ai status page)
-- Ollama Cloud uses the Ollama usage endpoint `https://ollama.com/api/usage` as the service health signal
+- Ollama Cloud uses the Ollama balance endpoint `https://ollama.com/api/balance` as the service health signal
 
 Use:
 
