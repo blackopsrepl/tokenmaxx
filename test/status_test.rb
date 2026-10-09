@@ -52,8 +52,8 @@ class StatusTest < Minitest::Test
     end
   end
 
-  def test_ollama_status_uses_the_usage_endpoint
-    response = TokenMaxx::Core::Http::Response.new(status: 200, body: JSON.generate(limits: {}), headers: {})
+  def test_ollama_status_uses_the_balance_endpoint
+    response = TokenMaxx::Core::Http::Response.new(status: 200, body: JSON.generate(included: { balance_usd: 17.35, allowance_usd: 60 }), headers: {})
     previous = ENV["OLLAMA_API_KEY"]
     ENV["OLLAMA_API_KEY"] = "sk-test"
 
@@ -62,7 +62,7 @@ class StatusTest < Minitest::Test
 
       assert_equal "ok", status[:state]
       assert_equal "ollama", status[:provider]
-      assert_equal "ollama-cloud-usage", status[:source]
+      assert_equal "ollama-cloud-balance", status[:source]
     end
   ensure
     previous.nil? ? ENV.delete("OLLAMA_API_KEY") : ENV["OLLAMA_API_KEY"] = previous

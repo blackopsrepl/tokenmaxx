@@ -53,7 +53,7 @@ module TokenMaxx
           components: []
 },
 "ollama" => {
-  source: "ollama-cloud-usage",
+  source: "ollama-cloud-balance",
   url: nil,
   sourceUrl: "https://ollama.com/",
   components: []
