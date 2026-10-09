@@ -703,6 +703,53 @@ class RuntimeTest < Minitest::Test
     end
   end
 
+  def test_daemon_refresh_keeps_selection_pinned_during_fetch
+    Dir.mktmpdir("tokenmaxx-daemon-refresh") do |dir|
+      now = Time.now.utc
+      config_path = File.join(dir, "config.json")
+      config = build_config
+      config[:runtime][:stateDir] = dir
+      config = with_provider_state(config, "codex", enabled: true, visible: true, showInOverview: true)
+      config = with_provider_state(config, "zai", enabled: true, visible: true, showInOverview: true)
+      config = TokenMaxx::Core::Config.set_selected_provider(config, "codex")
+      TokenMaxx::Core::Config.save_config(config, config_path)
+
+      result = provider_result(
+        provider: "codex",
+        usage: usage_payload(provider: "codex", now: now, primary: window(used_percent: 10, window_minutes: 300, now: now, resets_in_minutes: 60))
+      )
+
+      TokenMaxx::Runtime::Usage.stub(:collect_usage, ->(*, **) {
+        # The user pins another provider while the fetch is in flight.
+        updated = TokenMaxx::Core::Config.set_selected_provider(
+          TokenMaxx::Core::Config.load_config(config_path), "zai"
+        )
+        TokenMaxx::Core::Config.save_config(updated, config_path)
+        { "codex" => result, "zai" => result }
+      }) do
+        TokenMaxx::Runtime::Status.stub(:refresh_if_due, ->(*) { {} }) do
+          TokenMaxx::Runtime::LocalUsage.stub(:refresh_if_due, ->(*) { {} }) do
+            TokenMaxx::Runtime::Storage.stub(:refresh_if_due, ->(*) { {} }) do
+              TokenMaxx::Runtime::History.stub(:update, ->(*) { {} }) do
+                TokenMaxx::Runtime::Notifications.stub(:process, ->(*) { {} }) do
+                  TokenMaxx::Runtime::Daemon.stub(:signal_waybar, ->(*) {}) do
+                    snapshot = TokenMaxx::Runtime::Daemon.refresh(config_path)
+                    assert_equal "zai", snapshot[:displayProvider]
+                  end
+                end
+              end
+            end
+          end
+        end
+      end
+
+      reread = TokenMaxx::Runtime::State.read_snapshot(
+        TokenMaxx::Core::Config.load_config(config_path)
+      )
+      assert_equal "zai", reread[:displayProvider]
+    end
+  end
+
   def test_ensure_state_dir_never_imports_into_the_legacy_dir_itself
     Dir.mktmpdir("tokenmaxx-state-legacy") do |home|
       old_home = ENV["HOME"]

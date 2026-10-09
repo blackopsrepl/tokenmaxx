@@ -32,6 +32,10 @@ module TokenMaxx
         snapshot = nil
 
         State.with_refresh_lock(config) do
+          # The config object may predate this refresh (the daemon loop hands
+          # down the config it loaded before sleeping), so re-read it before
+          # deciding which providers to fetch.
+          config = Core::Config.load_config(config_path)
           enabled = Usage.enabled_providers(config)
           results = Usage.collect_usage(config, enabled)
           previous = State.read_snapshot(config)
@@ -48,6 +52,17 @@ module TokenMaxx
             storage: storage
           )
           history = History.update(config, draft, local_usage)
+          # The auxiliary refreshes above can take seconds when due. Re-read
+          # once more at the last moment so a pin/swap landing in that window
+          # survives this write instead of reverting the bar.
+          config = Core::Config.load_config(config_path)
+          enabled = Usage.enabled_providers(config)
+          # The enabled set may have changed while the fetches and auxiliary
+          # refreshes were in flight; drop results for providers disabled
+          # since, so the snapshot stays consistent with the fresh config.
+          # Providers enabled mid-refresh simply have no result yet and fill
+          # in on the next pass.
+          results = results.select { |provider, _| enabled.include?(provider.to_s) }
           snapshot = State.build_snapshot(
             config,
             enabled,
