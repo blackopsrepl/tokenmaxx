@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import Quickshell.Wayland
 
 ShellRoot {
     id: root
@@ -611,7 +612,7 @@ ShellRoot {
         implicitWidth: Math.max(minimumWidth, contentItem.implicitWidth + 18)
 
         background: Rectangle {
-            radius: 0
+            radius: 3
             color: control.down ? withAlpha(control.accent, 0.26) : (control.hovered ? withAlpha(control.accent, 0.18) : withAlpha(control.accent, 0.10))
             border.color: control.hovered ? withAlpha(control.accent, 0.60) : withAlpha(control.accent, 0.34)
             border.width: 1
@@ -674,7 +675,7 @@ ShellRoot {
         onClicked: root.setView(view)
 
         background: Rectangle {
-            radius: 0
+            radius: 3
             color: tab.selected ? withAlpha(tab.accent, 0.24) : (tab.hovered ? withAlpha(tab.accent, 0.14) : root.theme.surface)
             border.width: 1
             border.color: tab.selected ? withAlpha(tab.accent, 0.70) : withAlpha(tab.accent, 0.24)
@@ -727,20 +728,27 @@ ShellRoot {
         property int minimumWidth: 0
         property int maximumWidth: 220
 
-        radius: 0
-        implicitHeight: 20
-        implicitWidth: Math.min(maximumWidth, Math.max(minimumWidth, contentRow.implicitWidth + 14))
-        color: withAlpha(accent, 0.14)
-        border.width: 1
-        border.color: withAlpha(accent, 0.34)
+        radius: 3
+        implicitHeight: 18
+        implicitWidth: Math.min(maximumWidth, Math.max(minimumWidth, contentRow.implicitWidth + 10))
+        color: "transparent"
         clip: true
 
         RowLayout {
             id: contentRow
             anchors.fill: parent
-            anchors.leftMargin: 7
-            anchors.rightMargin: 7
+            anchors.leftMargin: 5
+            anchors.rightMargin: 5
             spacing: 4
+
+            // Tone dot: the accent reads at a glance without a tinted fill.
+            Rectangle {
+                visible: pill.icon.length === 0
+                Layout.preferredWidth: 6
+                Layout.preferredHeight: 6
+                radius: 3
+                color: pill.accent
+            }
 
             Text {
                 visible: pill.icon.length > 0
@@ -756,8 +764,7 @@ ShellRoot {
                 text: pill.text
                 color: pill.foreground
                 font.family: root.textFont
-                font.pixelSize: 10
-                font.bold: true
+                font.pixelSize: 9
                 elide: Text.ElideRight
             }
         }
@@ -823,7 +830,7 @@ ShellRoot {
     component CardFrame: Rectangle {
         id: card
         property color accent: root.theme.good
-        radius: 0
+        radius: 4
         color: root.theme.surfaceHi
         border.width: 1
         border.color: withAlpha(accent, 0.28)
@@ -1225,7 +1232,10 @@ ShellRoot {
         visible: uiAdapter.open
         screen: Quickshell.screens.length ? Quickshell.screens[0] : null
         color: "transparent"
-        focusable: true
+        // Mac-bar behavior: no focus grab, no backdrop. The input mask is
+        // bound to the modal frame, so clicks outside it reach the desktop.
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+        mask: Region { item: modalFrame; intersection: Intersection.Intersect }
         aboveWindows: true
         exclusionMode: ExclusionMode.Ignore
         property int verticalMargin: root.dense ? 10 : 18
@@ -1267,12 +1277,6 @@ ShellRoot {
             anchors.fill: parent
 
             Rectangle {
-                anchors.fill: parent
-                color: root.theme.bgDeep
-                opacity: 0.66
-            }
-
-            Rectangle {
                 anchors.centerIn: parent
                 width: modalFrame.width + 10
                 height: modalFrame.height + 10
@@ -1288,18 +1292,11 @@ ShellRoot {
                 color: Qt.rgba(0, 0, 0, 0.34)
             }
 
-            MouseArea {
-                anchors.fill: parent
-                enabled: uiAdapter.open
-                onClicked: root.closePanel()
-            }
-
             FocusScope {
                 id: modalFrame
                 anchors.centerIn: parent
                 width: Math.min(960, Math.max(320, panelWindow.width - (root.dense ? 24 : 36)))
                 height: Math.min(panelWindow.height - 12, Math.max(420, panelWindow.height - (panelWindow.verticalMargin * 2)))
-                focus: true
 
                 Keys.onEscapePressed: root.closePanel()
 
