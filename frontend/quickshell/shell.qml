@@ -147,9 +147,9 @@ ShellRoot {
         // detail action rail card when present + fixed chrome (header, view
         // tabs, status row, heatmap card, display band, margins ≈ 620
         // relaxed / 540 compact, minus the rail card when narrow).
-        var overviewRows = Math.min(overviewProviders().length, 4) * (isCompact() ? 102 : 118)
-        var railCard = isNarrow() ? 0 : (isCompact() ? 172 : 230)
-        var chrome = (isCompact() ? 540 : 598) - railCard
+        var overviewRows = Math.min(overviewProviders().length, 4) * (isCompact() ? 106 : 150)
+        var railCard = isNarrow() ? 0 : (isCompact() ? 176 : 252)
+        var chrome = (isCompact() ? 560 : 640) - railCard
         var content = overviewRows + chrome
         var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
         var available = screenHeight - root.dropDownTopMargin - 12
@@ -1502,7 +1502,7 @@ ShellRoot {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: root.dense ? 12 : 18
-                    spacing: root.dense ? 8 : 12
+                    spacing: root.dense ? 10 : 14
 
                     CardFrame {
                         Layout.fillWidth: true
@@ -1733,7 +1733,7 @@ ShellRoot {
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.margins: root.dense ? 10 : 12
-                                            spacing: root.dense ? 8 : 10
+                                            spacing: root.dense ? 8 : 12
 
                                     RowLayout {
                                         spacing: 8
@@ -1807,7 +1807,7 @@ ShellRoot {
                                             delegate: CardFrame {
                                                 required property var modelData
                                                 Layout.fillWidth: true
-                                                Layout.preferredHeight: root.dense ? 102 : 118
+                                                Layout.preferredHeight: root.dense ? 106 : 150
                                                 accent: statusColor(modelData)
                                                 color: modelData.id === root.focusProviderId ? root.theme.surface : (cardHover.containsMouse ? root.theme.surfaceHi : root.theme.surface)
 
@@ -2685,7 +2685,7 @@ ShellRoot {
 
                     CardFrame {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.dense ? 172 : 230
+                        Layout.preferredHeight: root.dense ? 176 : 252
                         visible: root.activeView === "detail" && !root.narrowLayout
                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
@@ -2700,7 +2700,7 @@ ShellRoot {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: root.dense ? 4 : 6
+                                    spacing: root.dense ? 4 : 8
 
                                     SectionHeader {
                                         text: "Focus"
@@ -2755,7 +2755,7 @@ ShellRoot {
 
                                 ColumnLayout {
                                     Layout.fillWidth: true
-                                    spacing: root.dense ? 4 : 6
+                                    spacing: root.dense ? 4 : 8
 
                                     SectionHeader {
                                         text: "Provider"
@@ -2830,7 +2830,7 @@ ShellRoot {
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: root.dense ? 4 : 6
+                                spacing: root.dense ? 4 : 8
 
                                 SectionHeader {
                                     text: "Display"
@@ -2888,7 +2888,7 @@ ShellRoot {
 
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: root.dense ? 4 : 6
+                                spacing: root.dense ? 4 : 8
 
                                 SectionHeader {
                                     text: "Runtime"

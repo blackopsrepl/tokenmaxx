@@ -206,7 +206,7 @@ class QuickShellTest < Minitest::Test
   # fixed preferredWidth 500; on a narrow viewport it would leave the status
   # column an unreadable sliver, so it drops out with the compact layout too.
   def test_detail_action_rail_drops_out_when_narrow
-    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 172 : 230\n([\s\S]*?)\n                    \}\n                \}\n/m, 1]
+    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 176 : 252\n([\s\S]*?)\n                    \}\n                \}\n/m, 1]
 
     refute_nil rail, "the detail action rail card block must exist"
     assert_match(/visible: root\.activeView === "detail" && !root\.narrowLayout/, rail, "the fixed-width action rail must drop out on narrow viewports")
@@ -289,7 +289,7 @@ class QuickShellTest < Minitest::Test
     function_body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
     assert_match(/Math\.min\(overviewProviders\(\)\.length, 4\)/, function_body,
                  "overview rows are counted with a visible cap, not from content implicit sizes")
-    assert_includes function_body, "isCompact() ? 540 : 598"
+    assert_includes function_body, "isCompact() ? 560 : 640"
     assert_match(/Math\.max\(430, Math\.min\(root\.dropDownMaxHeight, available, content\)/, function_body,
                  "the counted height carries a floor, the drop-down cap, and the screen-room yield")
     assert_includes qml_source, "property int dropDownMaxHeight: 1180",
