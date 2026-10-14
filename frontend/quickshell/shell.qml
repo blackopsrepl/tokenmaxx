@@ -149,7 +149,7 @@ ShellRoot {
         // relaxed / 540 compact, minus the rail card when narrow).
         var overviewRows = Math.min(overviewProviders().length, 4) * (isCompact() ? 102 : 118)
         var railCard = isNarrow() ? 0 : (isCompact() ? 172 : 230)
-        var chrome = (isCompact() ? 540 : 592) - railCard
+        var chrome = (isCompact() ? 540 : 598) - railCard
         var content = overviewRows + chrome
         var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
         var available = screenHeight - root.dropDownTopMargin - 12
@@ -1055,7 +1055,7 @@ ShellRoot {
                     text: root.glyphs.cost
                     color: usageHeatmap.accent
                     font.family: root.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                 }
 
                 Label {
@@ -1263,7 +1263,7 @@ ShellRoot {
                     text: itemData.icon || ""
                     color: tile.accent
                     font.family: root.iconFont
-                    font.pixelSize: 13
+                    font.pixelSize: 12
                 }
 
                 Label {
@@ -1506,7 +1506,7 @@ ShellRoot {
 
                     CardFrame {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.dense ? 62 : 78
+                        Layout.preferredHeight: root.dense ? 62 : 84
                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
                         RowLayout {
@@ -1533,7 +1533,7 @@ ShellRoot {
                                             text: viewData.summary && viewData.summary.displayLabel ? ("TokenMaxx / " + viewData.summary.displayLabel) : "TokenMaxx"
                                             color: root.theme.text
                                             font.family: root.textFont
-                                            font.pixelSize: root.dense ? 15 : 18
+                                            font.pixelSize: root.dense ? 15 : 21
                                             font.bold: true
                                         }
                                         // Live dot: red on an action error, amber
@@ -1742,7 +1742,7 @@ ShellRoot {
                                             text: root.glyphs.overview
                                             color: root.theme.info
                                             font.family: root.iconFont
-                                            font.pixelSize: 13
+                                            font.pixelSize: 12
                                         }
 
                                         Label {
@@ -2028,7 +2028,7 @@ ShellRoot {
                                                             text: focusProvider() ? focusProvider().label : "No provider selected"
                                                             color: root.theme.text
                                                             font.family: root.textFont
-                                                            font.pixelSize: 18
+                                                            font.pixelSize: 21
                                                             font.bold: true
                                                         }
 
@@ -2080,7 +2080,7 @@ ShellRoot {
                                                         text: focusProvider() && focusProvider().hero ? focusProvider().hero.icon : ""
                                                         color: focusProvider() ? statusColor(focusProvider()) : root.theme.good
                                                         font.family: root.iconFont
-                                                        font.pixelSize: 13
+                                                        font.pixelSize: 12
                                                     }
 
                                                     Label {
@@ -2099,7 +2099,7 @@ ShellRoot {
                                                         text: focusProvider() && focusProvider().hero ? focusProvider().hero.value : (focusProvider() ? focusProvider().chipText : "--")
                                                         color: focusProvider() ? statusColor(focusProvider()) : root.theme.textSoft
                                                         font.family: root.textFont
-                                                        font.pixelSize: 24
+                                                        font.pixelSize: 21
                                                         font.bold: true
                                                     }
 
@@ -2175,7 +2175,7 @@ ShellRoot {
                                                         text: root.glyphs.cost
                                                         color: focusProvider() ? statusColor(focusProvider()) : root.theme.info
                                                         font.family: root.iconFont
-                                                        font.pixelSize: 13
+                                                        font.pixelSize: 12
                                                     }
 
                                                     Label {
@@ -2259,7 +2259,7 @@ ShellRoot {
                                                         text: root.glyphs.alert
                                                         color: focusProvider() ? statusColor(focusProvider()) : root.theme.bad
                                                         font.family: root.iconFont
-                                                        font.pixelSize: 13
+                                                        font.pixelSize: 12
                                                     }
 
                                                     Label {
@@ -2419,7 +2419,7 @@ ShellRoot {
                                         text: focusProvider() ? (focusProvider().label + " history") : "History"
                                         color: root.theme.text
                                         font.family: root.textFont
-                                        font.pixelSize: 18
+                                        font.pixelSize: 21
                                         font.bold: true
                                     }
 
@@ -2510,7 +2510,7 @@ ShellRoot {
                                                     text: root.glyphs.history
                                                     color: root.theme.textMuted
                                                     font.family: root.iconFont
-                                                    font.pixelSize: 30
+                                                    font.pixelSize: 21
                                                 }
 
                                                 Label {
@@ -2518,7 +2518,7 @@ ShellRoot {
                                                     text: "No retained history yet"
                                                     color: root.theme.text
                                                     font.family: root.textFont
-                                                    font.pixelSize: 16
+                                                    font.pixelSize: 15
                                                     font.bold: true
                                                 }
 
@@ -2565,7 +2565,7 @@ ShellRoot {
                                         text: "Settings"
                                         color: root.theme.text
                                         font.family: root.textFont
-                                        font.pixelSize: 18
+                                        font.pixelSize: 21
                                         font.bold: true
                                     }
 

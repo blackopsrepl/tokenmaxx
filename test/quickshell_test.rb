@@ -289,7 +289,7 @@ class QuickShellTest < Minitest::Test
     function_body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
     assert_match(/Math\.min\(overviewProviders\(\)\.length, 4\)/, function_body,
                  "overview rows are counted with a visible cap, not from content implicit sizes")
-    assert_includes function_body, "isCompact() ? 540 : 592"
+    assert_includes function_body, "isCompact() ? 540 : 598"
     assert_match(/Math\.max\(430, Math\.min\(root\.dropDownMaxHeight, available, content\)/, function_body,
                  "the counted height carries a floor, the drop-down cap, and the screen-room yield")
     assert_includes qml_source, "property int dropDownMaxHeight: 1180",
@@ -329,7 +329,7 @@ class QuickShellTest < Minitest::Test
   # and family-styled labelled Refresh/Close action buttons replace the
   # glyph-only buttons.
   def test_header_carries_the_live_dot_and_family_buttons
-    header = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 62 : 78\n(.*?)\n                        \}\n                    \}/m, 1]
+    header = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 62 : 84\n(.*?)\n                        \}\n                    \}/m, 1]
     refute_nil header, "the header card block must exist"
 
     assert_match(/id: liveDot/, header, "the header needs the live dot")
@@ -367,6 +367,7 @@ class QuickShellTest < Minitest::Test
     assert_match(/the surface is transparent only over the card's own rect/, ui_doc,
                  "the transparent-card-surface note belongs in the UI docs")
   end
+
   # Family uniformity (the six *-bar sibling panels, modelled on this
   # panel's square-cornered mac-bar aesthetic): every Rectangle that
   # shapes a card, button, tab, badge, bar, or the panel shadow renders
@@ -394,6 +395,33 @@ class QuickShellTest < Minitest::Test
 
     assert_empty strays.uniq,
                  "rounded corners leaked back into the square family surface: #{strays.uniq.join(', ')}"
+  end
+
+  # Family font scale (Switchyard's): one size per role so the six *-bar
+  # panels read as one program — 9 secondary/meta, 10 body, 11 section and
+  # card labels, 12 summary values, 15 detail headers and hero labels in
+  # narrow chrome, 21 panel titles and big glyph ornaments. A size is only
+  # exempt when its glyph is a tiny mark drawn small on purpose (the 7px
+  # badge dot glyph). Ternary bindings must pick between scale values (the
+  # dense header title keeps its 15/21 pair); delegate lines that inherit
+  # another item's font carry no size of their own.
+  FAMILY_FONT_SCALE = [9, 10, 11, 12, 15, 21].freeze
+
+  def test_family_uses_the_shared_font_scale
+    strays = []
+
+    qml_source.each_line.with_index(1) do |line, line_no|
+      line.match(/font\.pixelSize:\s*(\S+)/) or next
+      value = Regexp.last_match(1)
+
+      sizes = value.scan(/\d+/).map(&:to_i)
+      next if sizes.empty? || sizes.all? { |size| size == 7 }
+
+      strays << "line #{line_no}: font.pixelSize: #{value}" unless sizes.all? { |size| FAMILY_FONT_SCALE.include?(size) }
+    end
+
+    assert_empty strays,
+                 "off-scale font sizes leaked back into the family panel: #{strays.join(', ')}"
   end
 
   # Smallest enclosing Rectangle-derived block for every `Rectangle {`
