@@ -289,7 +289,7 @@ class QuickShellTest < Minitest::Test
     assert_includes body, "return Math.min(root.dropDownMaxHeight, available)"
     assert_includes body, "screenHeight - root.dropDownTopMargin - 12"
     refute_match(/activeView|overviewProviders|providerGrid|railCard/, body)
-    assert_includes qml_source, "property int dropDownMaxHeight: 820"
+    assert_includes qml_source, "property int dropDownMaxHeight: 1180"
   end
 
   # The bar strip between the compositor's bar and the card is part of the

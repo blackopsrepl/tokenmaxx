@@ -116,7 +116,7 @@ ShellRoot {
     // Reserve one stable reading surface for every view and provider count.
     // Flexible scroll panes must not be used to shrink-wrap the window.
     property int dropDownTopMargin: 52
-    property int dropDownMaxHeight: 820
+    property int dropDownMaxHeight: 1180
 
     function cardWidth() {
         // Reads the SCREEN's width, never panelWindow.width: the surface's
