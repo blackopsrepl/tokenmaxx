@@ -190,8 +190,8 @@ class QuickShellTest < Minitest::Test
   # compact contract.
   def test_narrow_viewport_full_width_detail
     assert_match(/property bool narrowLayout:/, qml_source, "the panel needs a width breakpoint")
-    assert_match(/width: Math\.min\(960, Math\.max\(320, panelWindow\.width - \(root\.narrowLayout \? 24 : 36\)\)\)/,
-                 qml_source, "the modal must keep its usable width on narrow viewports")
+    assert_match(/function cardWidth\(\)/, qml_source, "the card carries a content-fit width function")
+    assert_match(/Math\.max\(560,/, qml_source, "the card width keeps a usable narrow floor")
 
     rail = qml_source[/CardFrame \{\n                            Layout\.preferredWidth: 260\n(.*?)\n                        \}\n                    \}\n\n                    CardFrame \{/m, 1]
     refute_nil rail, "the provider rail card block must exist"
@@ -206,7 +206,7 @@ class QuickShellTest < Minitest::Test
   # fixed preferredWidth 500; on a narrow viewport it would leave the status
   # column an unreadable sliver, so it drops out with the compact layout too.
   def test_detail_action_rail_drops_out_when_narrow
-    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 172 : 230\n(.*?)\n                    \}\n                \}\n            \}\n        \}\n    \}\n    \}\n\}/m, 1]
+    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 172 : 230\n([\s\S]*?)\n                    \}\n                \}\n/m, 1]
 
     refute_nil rail, "the detail action rail card block must exist"
     assert_match(/visible: root\.activeView === "detail" && !root\.narrowLayout/, rail, "the fixed-width action rail must drop out on narrow viewports")
@@ -247,5 +247,124 @@ class QuickShellTest < Minitest::Test
     assert_match(/queue CLI mutations into a small FIFO instead of killing in-flight commands/, ui_doc)
     assert_match(/narrow 720 pixel breakpoint/, ui_doc,
                  "the narrow-viewport contract belongs in the UI docs")
+  end
+
+  # The full-screen covering modal became a bounded bar drop-down: the
+  # PanelWindow surface is exactly the strip the card needs (bar edge +
+  # card rect), so the desktop underneath stays interactive without any
+  # screen-wide surface, scrim, halo stack, or backdrop catcher. The card
+  # hangs from the bar edge on the same side the Waybar chip occupies
+  # (modules-left on a top bar): left-of-center, below the bar strip.
+  # Verified anchor law (repobar/cronbar/backupbar render proofs): left+right
+  # anchors force the surface to full screen width, so the bounded shape is
+  # TOP-ONLY anchors + side margins.
+  def test_panel_window_is_bounded_to_the_bar_drop_down
+    window = qml_source[/PanelWindow \{\n        id: panelWindow\n([\s\S]*)\n    \}\n\}\n\z/m, 1]
+    refute_nil window, "the panel's PanelWindow block must exist"
+
+    assert_match(/anchors \{\n            top: true\n        \}/, window,
+                 "the surface must anchor to the bar's edge only, never the full screen")
+    refute_match(/bottom: true/, window, "a bounded drop-down never reaches the screen bottom")
+    refute_match(/left: true/, window, "left/right anchors force a full-width surface")
+    refute_match(/right: true/, window, "left/right anchors force a full-width surface")
+    assert_includes qml_source, "property int dropDownTopMargin: 52"
+    assert_match(/implicitWidth: root\.cardWidth\(\)/, window,
+                 "the surface is exactly the card's width — not the bar's, not the screen's")
+    assert_match(/implicitHeight: root\.cardHeight\(\) \+ root\.dropDownTopMargin/, window,
+                 "the surface height is the counted card height plus the bar strip")
+    refute_match(/anchors\.centerIn: parent/, window[/[\s\S]*?(?=
+        FocusScope \{)/] || "", "the drop-down hangs from the bar, never floats centered mid-screen")
+    refute_match(/mask:\s*Region/, window, "a bounded surface needs no clipped input mask; its own rect is the mask")
+    assert_match(/WlrLayershell\.keyboardFocus: WlrKeyboardFocus\.OnDemand/, window)
+    assert_includes window, "exclusionMode: ExclusionMode.Ignore"
+  end
+
+  # The card height is counted from the parts actually laid out — fixed
+  # chrome, view-tab row, action row, badge stack and provider cards —
+  # never from layout implicit sizes, and it is capped so the card stays a
+  # bar drop-down rather than growing toward the screen height.
+  def test_card_height_is_counted_and_capped_to_the_viewport
+    assert_match(/function cardHeight\(\) \{(.*)\n    \}/m, qml_source, "the drop-down needs a counted cardHeight()")
+
+    function_body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    assert_match(/Math\.min\(overviewProviders\(\)\.length, 4\)/, function_body,
+                 "overview rows are counted with a visible cap, not from content implicit sizes")
+    assert_includes function_body, "isCompact() ? 540 : 592"
+    assert_match(/Math\.max\(430, Math\.min\(root\.dropDownMaxHeight, available, content\)/, function_body,
+                 "the counted height carries a floor, the drop-down cap, and the screen-room yield")
+    assert_includes qml_source, "property int dropDownMaxHeight: 1180",
+                    "the cap must be a real height, never the screen height, so the card stays a bar drop-down"
+  end
+
+  # The bar strip between the compositor's bar and the card is part of the
+  # surface and is transparent, so it gets the dismissal catcher; the card
+  # keeps its own catcher so dead space inside it stays inert. No
+  # screen-wide Item, scrim, halo stack, or backdrop outside the card may
+  # come back.
+  def test_bounded_surface_dismisses_from_the_bar_strip_and_card_keeps_focus
+    window = qml_source[/PanelWindow \{\n        id: panelWindow\n([\s\S]*)\n    \}\n\}\n\z/m, 1]
+    card = qml_source[/FocusScope \{\n            id: modalFrame\n([\s\S]*?)(?:\n    \}\n\}\n\z|\n    \}\n\}\n\z)/m, 1]
+    refute_nil card, "the card must sit inside the bounded PanelWindow"
+
+    assert_match(/Rectangle \{\n            id: barStrip[\s\S]*?MouseArea \{\n                anchors\.fill: parent\n                onClicked: root\.closePanel\(\)/, window,
+                 "the strip between the bar and the card dismisses on click")
+    assert_includes card, "anchors.topMargin: root.dropDownTopMargin"
+    assert_includes card, "height: root.cardHeight()"
+    refute_match(/Qt\.rgba\(0, 0, 0, 0\.22\)/, qml_source,
+                 "the old scrim/halo stack must be gone from the bounded surface")
+    assert_match(/id: frameShadow/, window, "the drop-down hangs with a real shadow under the bar edge")
+  end
+
+  # Keyboard dismissal is carried by the card's escape handler — the card is
+  # the whole focusable surface now that no full-screen wrapper exists.
+  def test_escape_is_a_window_shortcut_on_the_bounded_surface
+    card = qml_source[/FocusScope \{\n            id: modalFrame\n([\s\S]*?)\n    \}\n\}\n\z/m, 1]
+
+    assert_match(/Keys\.onEscapePressed: root\.closePanel\(\)/, card,
+                 "Esc must dismiss the drop-down from the card surface")
+  end
+
+  # Family polish parity with switchyard 8cda212: the header carries a live
+  # dot (red on error, amber while an action runs, soft-green otherwise)
+  # and family-styled labelled Refresh/Close action buttons replace the
+  # glyph-only buttons.
+  def test_header_carries_the_live_dot_and_family_buttons
+    header = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 62 : 78\n(.*?)\n                        \}\n                    \}/m, 1]
+    refute_nil header, "the header card block must exist"
+
+    assert_match(/id: liveDot/, header, "the header needs the live dot")
+    assert_match(/id: liveDot[\s\S]*?root\.actionError\.length > 0 \? root\.theme\.bad[\s\S]*?actionRunner\.running[\s\S]*?root\.theme\.good/, qml_source,
+                 "the dot reads: red on error, amber in flight, soft-green idle")
+    assert_match(/CodexButton \{[^}]*glyph: root\.glyphs\.refresh[^}]*onClicked: root\.refreshAction\(\)[^}]*\}/m, header,
+                 "the header keeps the Refresh action button")
+    assert_match(/CodexButton \{[^}]*glyph: root\.glyphs\.close[^}]*onClicked: root\.closePanel\(\)[^}]*\}/m, header,
+                 "the header keeps the Close action button")
+    assert_match(/ToolTip\.text: "Re-scan providers and refresh the cached snapshot"/, header,
+                 "the Refresh button carries its tooltip")
+    assert_match(/ToolTip\.text: "Close the panel \(Esc\)"/, header, "the Close button carries its tooltip")
+    refute_match(/glyph: root\.glyphs\.refresh\n[^}]*\}\n\n\s*CodexButton \{\n\s*text: ""\n\s*glyph: root\.glyphs\.close\n\s*accent: root\.theme\.bad\n\s*compact: true\n\s*minimumWidth: 34\n\s*onClicked/m, header,
+                 "the close glyph button must carry its tooltip too")
+  end
+
+  # Bounded-surface semantics must be documented honestly: the surface is the
+  # bar drop-down's rect; clicks outside the card land on the desktop; the
+  # bar-strip catcher and the Esc/Close affordances dismiss. The old
+  # "input mask covers only the modal frame" claim retired with the mask.
+  def test_docs_describe_the_bounded_bar_drop_down
+    ui_doc = File.read(File.expand_path("../docs/ui.md", __dir__))
+
+    refute_match(/Its input mask covers only the modal frame/, ui_doc,
+                 "the mask claim retired with the full-screen surface")
+    assert_match(/bounded bar drop-down/, ui_doc, "the shape belongs in the UI docs")
+    assert_match(/hangs from the bar edge on the same side its Waybar chip occupies/, ui_doc,
+                 "the chip-side placement contract belongs in the UI docs")
+    assert_match(/its height is counted from the laid-out parts and capped to the viewport/i, ui_doc,
+                 "the counted-height contract belongs in the UI docs")
+    assert_match(/The desktop outside the surface stays interactive/, ui_doc,
+                 "the bounded-surface interactivity contract belongs in the UI docs")
+    assert_match(/click inside the popover to interact, Esc or the Close button to dismiss/, ui_doc,
+                 "the honest dismissal trade belongs in the UI docs")
+    assert_match(/the surface is transparent only over the card's own rect/, ui_doc,
+                 "the transparent-card-surface note belongs in the UI docs")
   end
 end

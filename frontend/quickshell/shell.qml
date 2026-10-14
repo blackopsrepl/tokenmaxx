@@ -109,15 +109,62 @@ ShellRoot {
     property var providerViews: viewData.providers || []
     property string focusProviderId: ""
     property string activeView: "overview"
-    // Low-resolution displays (1366x768 and similar laptops) cannot fit the
-    // relaxed chrome, so the panel tightens margins, the header, and the
-    // detail action panel instead of squeezing the content area to a sliver.
-    property bool dense: panelWindow.height > 0 && panelWindow.height < 820
+
+    // Bounded bar drop-down: the layer surface is exactly the card's rect
+    // below the bar edge (top-anchored, no bottom/right anchors — those force
+    // a full-screen surface), so the panel never covers apps or the screen.
+    // The height is counted from laid-out parts, never measured from implicit
+    // sizes (a ListView and a fillHeight pane both report a near-zero
+    // implicit height, which is how the old panel collapsed and why the frame
+    // was screen-shaped instead of work-shaped).
+    property int dropDownTopMargin: 52
+    property int dropDownMaxHeight: 1180
+
+    function cardWidth() {
+        // Reads the SCREEN's width, never panelWindow.width: the surface's
+        // own width participates in its sizing and a window read is a
+        // binding loop.
+        var screenWidth = panelWindow.screen ? panelWindow.screen.width : 1440
+        return Math.min(960, Math.max(560, screenWidth - 48))
+    }
+
+    function isCompact() {
+        // The tight-chrome decision reads raw layout inputs (snapshot
+        // provider count, screen size), never the card's own resolved
+        // height — a cardHeight()→dense→cardHeight() chain is a binding
+        // loop the scene warns about on every render.
+        var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
+        return screenHeight < 820 || overviewProviders().length > 4
+    }
+
+    function isNarrow() {
+        var screenWidth = panelWindow.screen ? panelWindow.screen.width : 1440
+        return screenWidth - 48 < 720
+    }
+
+    function cardHeight() {
+        // Counted: overview provider cards (capped at 4 visible) + the
+        // detail action rail card when present + fixed chrome (header, view
+        // tabs, status row, heatmap card, display band, margins ≈ 620
+        // relaxed / 540 compact, minus the rail card when narrow).
+        var overviewRows = Math.min(overviewProviders().length, 4) * (isCompact() ? 102 : 118)
+        var railCard = isNarrow() ? 0 : (isCompact() ? 172 : 230)
+        var chrome = (isCompact() ? 540 : 592) - railCard
+        var content = overviewRows + chrome
+        var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
+        var available = screenHeight - root.dropDownTopMargin - 12
+        return Math.max(430, Math.min(root.dropDownMaxHeight, available, content))
+    }
+    // Bounded surface: the drop-down is card-sized, so the breakpoints read
+    // the card's own geometry rather than a full-screen surface's.
+    property bool dense: isCompact()
     // Narrow viewports (split screens, half-tiled windows) starve the detail
     // column when the fixed 260 provider rail sits beside it, so the compact
     // contract drops that rail and its fixed-width action stack: the full
-    // rail stays selectable from the Provider Detail view.
-    property bool narrowLayout: panelWindow.width > 0 && panelWindow.width < 720
+    // rail stays selectable from the Provider Detail view. Reads the card's
+    // own width — `panelWindow.width` is the bounded surface and would tie
+    // the card's width into its own sizing loop.
+    property bool narrowLayout: isNarrow()
     // The header badge stack is the one chrome that cannot wrap at any useful
     // size; it hides together with the rail under the compact contract.
     property bool denseHeader: root.dense || root.narrowLayout
@@ -1351,28 +1398,29 @@ ShellRoot {
         visible: uiAdapter.open
         screen: Quickshell.screens.length ? Quickshell.screens[0] : null
         color: "transparent"
-        // Mac-bar behavior: no focus grab, no backdrop. The input mask is
-        // bound to the modal frame, so clicks outside it reach the desktop.
+        // Bounded bar drop-down: the surface IS the card's rect below the bar
+        // edge — no scrim, no screen-sized mask, nothing painted over the
+        // desktop. Layer surfaces are opaque to input, so the transparent
+        // bar-strip Rectangle carries dismissal; Esc and Close remain.
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-        mask: Region { item: modalFrame; intersection: Intersection.Intersect }
         aboveWindows: true
         exclusionMode: ExclusionMode.Ignore
-        property int verticalMargin: root.dense ? 10 : 18
-        implicitWidth: screen ? screen.width : 960
-        implicitHeight: screen ? screen.height : 760
+
+        implicitWidth: root.cardWidth()
+        implicitHeight: root.cardHeight() + root.dropDownTopMargin
 
         anchors {
             top: true
-            bottom: true
-            left: true
-            right: true
         }
 
         margins {
-            top: 0
-            bottom: 0
-            left: 0
-            right: 0
+            top: root.dropDownTopMargin
+            // Left-of-center under the top bar's left cluster: bias the
+            // card 40px left of the centered position, clamped to a sane
+            // inner margin so it never leaves the screen.
+            left: Math.max(8, Math.min(96, (screen ? screen.width : 1440) / 2 - root.cardWidth() / 2 - 40))
+            right: Math.max(8, (screen ? screen.width : 1440) - root.cardWidth() - Math.max(8, Math.min(96, (screen ? screen.width : 1440) / 2 - root.cardWidth() / 2 - 40)))
+            bottom: 8
         }
 
         onVisibleChanged: {
@@ -1392,37 +1440,50 @@ ShellRoot {
             easing.type: Easing.OutCubic
         }
 
-        Item {
-            anchors.fill: parent
+        Rectangle {
+            id: barStrip
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: root.dropDownTopMargin
+            color: "transparent"
 
-            Rectangle {
-                anchors.centerIn: parent
-                width: modalFrame.width + 10
-                height: modalFrame.height + 10
-                radius: 0
-                color: Qt.rgba(0, 0, 0, 0.22)
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.closePanel()
             }
+        }
 
-            Rectangle {
-                anchors.centerIn: parent
-                width: modalFrame.width + 4
-                height: modalFrame.height + 4
-                radius: 0
-                color: Qt.rgba(0, 0, 0, 0.34)
-            }
+        Rectangle {
+            id: frameShadow
+            anchors.top: modalFrame.top
+            anchors.left: modalFrame.left
+            anchors.right: modalFrame.right
+            anchors.topMargin: 4
+            anchors.leftMargin: -2
+            anchors.rightMargin: -2
+            height: modalFrame.height + 4
+            color: Qt.rgba(0, 0, 0, 0.34)
+            radius: 6
+            visible: modalFrame.visible
+        }
 
-            FocusScope {
-                id: modalFrame
-                anchors.centerIn: parent
-                width: Math.min(960, Math.max(320, panelWindow.width - (root.narrowLayout ? 24 : 36)))
-                height: Math.min(panelWindow.height - 12, Math.max(420, panelWindow.height - (panelWindow.verticalMargin * 2)))
+        FocusScope {
+            id: modalFrame
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.topMargin: root.dropDownTopMargin
+            height: root.cardHeight()
+            width: parent.width
+            clip: false
 
-                Keys.onEscapePressed: root.closePanel()
+            Keys.onEscapePressed: root.closePanel()
 
-                CardFrame {
-                    anchors.fill: parent
-                    accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
-                    color: root.theme.bg
+            CardFrame {
+                anchors.fill: parent
+                accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
+                color: root.theme.bg
 
                 MouseArea {
                     anchors.fill: parent
@@ -1474,6 +1535,19 @@ ShellRoot {
                                             font.family: root.textFont
                                             font.pixelSize: root.dense ? 15 : 18
                                             font.bold: true
+                                        }
+                                        // Live dot: red on an action error, amber
+                                        // while commands are in flight, soft
+                                        // green at idle — the panel's pulse at a
+                                        // glance, matching the family header.
+                                        Rectangle {
+                                            id: liveDot
+                                            Layout.preferredWidth: 7
+                                            Layout.preferredHeight: 7
+                                            radius: 3.5
+                                            color: root.actionError.length > 0 ? root.theme.bad
+                                                : (root.pendingActionVisible() && root.pendingActionText().length > 0
+                                                    || actionRunner.running) ? root.theme.warn : root.theme.good
                                         }
 
                                         Label {
@@ -1543,6 +1617,9 @@ ShellRoot {
                                     accent: root.theme.good
                                     compact: true
                                     minimumWidth: 34
+                                    ToolTip.delay: 350
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "Re-scan providers and refresh the cached snapshot"
                                     onClicked: root.refreshAction()
                                 }
 
@@ -1552,6 +1629,9 @@ ShellRoot {
                                     accent: root.theme.bad
                                     compact: true
                                     minimumWidth: 34
+                                    ToolTip.delay: 350
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: "Close the panel (Esc)"
                                     onClicked: root.closePanel()
                                 }
                             }
@@ -2897,6 +2977,5 @@ ShellRoot {
                 }
             }
         }
-    }
     }
 }
