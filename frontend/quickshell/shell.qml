@@ -113,6 +113,14 @@ ShellRoot {
     // relaxed chrome, so the panel tightens margins, the header, and the
     // detail action panel instead of squeezing the content area to a sliver.
     property bool dense: panelWindow.height > 0 && panelWindow.height < 820
+    // Narrow viewports (split screens, half-tiled windows) starve the detail
+    // column when the fixed 260 provider rail sits beside it, so the compact
+    // contract drops that rail and its fixed-width action stack: the full
+    // rail stays selectable from the Provider Detail view.
+    property bool narrowLayout: panelWindow.width > 0 && panelWindow.width < 720
+    // The header badge stack is the one chrome that cannot wrap at any useful
+    // size; it hides together with the rail under the compact contract.
+    property bool denseHeader: root.dense || root.narrowLayout
     // Peak state resolves against the panel's own clock from timezone-absolute
     // compiled timelines in peakSchedules, so it is exact at every boundary and
     // DST/odd-offset correct without repeating the schedule here. The timer is
@@ -369,19 +377,6 @@ ShellRoot {
         return root.theme.border
     }
 
-    function runTokenMaxx(args) {
-        var command = [root.tokenmaxxBin].concat(args).concat(["--config", root.configPath])
-        if (actionRunner.running) {
-            if (actionRunner.queue.length < 8) {
-                actionRunner.queue.push(command)
-            }
-            return
-        }
-
-        actionRunner.command = command
-        actionRunner.running = true
-    }
-
     function displayProvider() {
         var displayId = snapshotAdapter.displayProvider || ""
         var provider = findProvider(displayId)
@@ -429,7 +424,7 @@ ShellRoot {
     }
 
     function cacheCommand(target) {
-        runTokenMaxx(["cache", "clear", target])
+        root.dispatchAction(["cache", "clear", target], "Clearing " + target + " cache")
     }
 
     function compactJoin(parts) {
@@ -496,12 +491,64 @@ ShellRoot {
         uiFile.writeAdapter()
     }
 
+    // Action lifecycle: every mutation carries where it came from so the
+    // status line can name it ("Refreshing provider quota ... done"), keep
+    // describing queued work while earlier commands run, and surface a
+    // failure on the panel with the command's own stderr — never back in a
+    // debug log nobody reads. The queue drains in order; a burst of clicks
+    // still all land.
+    property string pendingAction: ""
+    property string actionError: ""
+
+    // Vocabulary shared by the wrappers below and the labels next to them:
+    // the panel speaks the CLI's command names, not synonyms of them.
+    function displayLabels() {
+        return {
+            used: "Used",
+            remaining: "Remaining",
+            both: "Both",
+            percent: "Percent",
+            pace: "Pace",
+            mode: "mode"
+        }
+    }
+
+    function refreshAction() {
+        root.dispatchAction(["refresh"], "Refreshing provider quota")
+    }
+
+    function scanCommand(kind) {
+        var labels = {
+            status: "Scanning status",
+            usage: "Scanning usage",
+            cost: "Scanning usage",
+            storage: "Scanning storage",
+            refresh: "Refreshing provider quota"
+        }
+        var label = labels[kind]
+        var args = kind === "usage" ? ["cost"] : [kind]
+        root.dispatchAction(args, label)
+    }
+
+    function providerAutoCommand() {
+        root.dispatchAction(["providers", "auto"], "Resetting provider auto-select")
+    }
+
+    function setPinnedProvider(providerId) {
+        root.dispatchAction(["providers", "pin", providerId], "Pinning " + providerId)
+    }
+
+    function dashboardCommand(providerId) {
+        root.dispatchAction(["open", "dashboard", providerId], "Opening " + providerId + " dashboard")
+    }
+
     function providerCommand(action, providerId) {
-        runTokenMaxx(["providers", action, providerId])
+        var verb = { activate: "Activating", deactivate: "Deactivating", show: "Showing", hide: "Hiding" }[action] || action
+        root.dispatchAction(["providers", action, providerId], verb + " " + providerId)
     }
 
     function overviewCommand(action, providerId) {
-        runTokenMaxx(["providers", "overview", action, providerId])
+        root.dispatchAction(["providers", "overview", action, providerId], "Updating overview for " + providerId)
     }
 
     function displayCommand(action, value) {
@@ -509,7 +556,9 @@ ShellRoot {
         if (value) {
             args.push(value)
         }
-        runTokenMaxx(args)
+        var labels = root.displayLabels()
+        var target = action === "mode" ? (labels[value] || value) : (labels[action] || action)
+        root.dispatchAction(args, "Setting display mode " + target)
     }
 
     function runtimeCommand(mode, seconds) {
@@ -517,33 +566,103 @@ ShellRoot {
         if (seconds) {
             args.push(seconds)
         }
-        runTokenMaxx(args)
+        root.dispatchAction(args, seconds ? "Setting runtime cadence " + seconds : "Setting runtime cadence " + mode)
     }
 
     function notificationCommand(enabled) {
-        runTokenMaxx(["notifications", enabled ? "enable" : "disable"])
+        root.dispatchAction(["notifications", enabled ? "enable" : "disable"], enabled ? "Enabling notifications" : "Disabling notifications")
     }
 
     function privacyCommand(hidden) {
-        runTokenMaxx(["privacy", hidden ? "hide" : "show"])
+        root.dispatchAction(["privacy", hidden ? "hide" : "show"], hidden ? "Hiding identity" : "Showing identity")
+    }
+
+    function dispatchAction(args, message) {
+        var command = [root.tokenmaxxBin].concat(args).concat(["--config", root.configPath])
+        if (actionRunner.queue.length >= 8) {
+            return
+        }
+        if (message && message.length > 0) {
+            actionRunner.queueDescriptions.push(message)
+        } else {
+            actionRunner.queueDescriptions.push("")
+        }
+        actionRunner.queue.push(command)
+        if (!actionRunner.running) {
+            root.actionQueueDrain()
+        }
+    }
+
+    // Shows the in-flight action when there is one, otherwise the next queued
+    // one, so the status line stays truthful while commands drain in order.
+    function pendingActionText() {
+        if (actionRunner.running) {
+            return pendingAction
+        }
+        if (actionRunner.queueDescriptions.length > 0) {
+            return actionRunner.queueDescriptions[0]
+        }
+        return ""
+    }
+
+    function pendingActionVisible() {
+        return pendingActionText().length > 0 || actionError.length > 0
+    }
+
+    function actionFailed(message) {
+        root.actionError = message
+        root.pendingAction = ""
+    }
+
+    function actionCompleted(message, exitCode) {
+        if (exitCode !== 0 && exitCode !== undefined) {
+            root.actionFailed(message)
+            return
+        }
+        root.pendingAction = ""
+    }
+
+    function actionQueueDrain() {
+        if (actionRunner.running || actionRunner.queue.length === 0) {
+            return
+        }
+        var command = actionRunner.queue.shift()
+        pendingAction = actionRunner.queueDescriptions.shift()
+        if (!pendingAction) {
+            pendingAction = ""
+        }
+        actionError = ""
+        actionRunner.command = command
+        actionRunner.running = true
     }
 
     Process {
         id: actionRunner
         property var queue: []
+        property var queueDescriptions: []
         running: false
         stdout: StdioCollector {}
         stderr: StdioCollector {
-            onStreamFinished: {
-                if (text.trim().length) {
-                    console.log(text.trim())
+            id: actionRunnerError
+            // A finished stderr stream IS the terminal result whenever the
+            // CLI printed anything: resolve the lifecycle here so an error is
+            // on the panel, not in a debug log. A silent successful run (the
+            // common case) resolves at onExited below; text is undefined on
+            // an empty stream, so coerce before reading.
+            onStreamFinished: (text) => {
+                var message = String(text || "")
+                if (message.trim().length > 0) {
+                    root.actionFailed(message.trim())
                 }
             }
         }
+        onExited: (exitCode, exitStatus) => {
+            root.actionCompleted("", exitCode)
+            root.actionQueueDrain()
+        }
         onRunningChanged: {
-            if (!running && queue.length) {
-                command = queue.shift()
-                running = true
+            if (running) {
+                root.actionError = ""
             }
         }
     }
@@ -1295,7 +1414,7 @@ ShellRoot {
             FocusScope {
                 id: modalFrame
                 anchors.centerIn: parent
-                width: Math.min(960, Math.max(320, panelWindow.width - (root.dense ? 24 : 36)))
+                width: Math.min(960, Math.max(320, panelWindow.width - (root.narrowLayout ? 24 : 36)))
                 height: Math.min(panelWindow.height - 12, Math.max(420, panelWindow.height - (panelWindow.verticalMargin * 2)))
 
                 Keys.onEscapePressed: root.closePanel()
@@ -1379,6 +1498,7 @@ ShellRoot {
                                 spacing: 6
 
                                 BadgePill {
+                                    visible: !root.denseHeader
                                     text: viewData.summary.modeLabel || "Highest usage"
                                     icon: root.glyphs.status
                                     accent: root.theme.good
@@ -1386,6 +1506,7 @@ ShellRoot {
                                 }
 
                                 BadgePill {
+                                    visible: !root.denseHeader
                                     text: viewData.summary.showUsedLabel || "Remaining"
                                     icon: root.glyphs.meter
                                     accent: root.theme.info
@@ -1393,6 +1514,7 @@ ShellRoot {
                                 }
 
                                 BadgePill {
+                                    visible: !root.denseHeader
                                     text: viewData.summary.metricModeLabel || "both"
                                     icon: root.glyphs.overview
                                     accent: root.theme.warn
@@ -1400,6 +1522,7 @@ ShellRoot {
                                 }
 
                                 BadgePill {
+                                    visible: !root.denseHeader
                                     text: viewData.summary.refreshModeLabel || "120s refresh"
                                     icon: root.glyphs.refresh
                                     accent: root.theme.good
@@ -1407,6 +1530,7 @@ ShellRoot {
                                 }
 
                                 BadgePill {
+                                    visible: !root.denseHeader
                                     text: viewData.summary.notificationsLabel || "Notify off"
                                     icon: root.glyphs.bell
                                     accent: viewData.summary.notificationsLabel === "Notify on" ? root.theme.info : root.theme.textMuted
@@ -1419,7 +1543,7 @@ ShellRoot {
                                     accent: root.theme.good
                                     compact: true
                                     minimumWidth: 34
-                                    onClicked: root.runTokenMaxx(["refresh"])
+                                    onClicked: root.refreshAction()
                                 }
 
                                 CodexButton {
@@ -1469,9 +1593,27 @@ ShellRoot {
                         Item { Layout.fillWidth: true }
 
                         BadgePill {
+                            visible: !root.denseHeader
                             text: focusProvider() ? focusProvider().status : "loading"
                             icon: root.glyphs.status
                             accent: focusProvider() ? statusColor(focusProvider()) : root.theme.textMuted
+                        }
+                    }
+
+                    // Action feedback surface: pending work and terminal
+                    // results both land here. Failed commands keep their
+                    // stderr visible until the next action starts.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        visible: pendingActionVisible()
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: actionError.length > 0 ? actionError : (pendingActionText() + "…")
+                            color: actionError.length > 0 ? root.theme.bad : root.theme.textDim
+                            font.family: root.textFont
+                            font.pixelSize: 10
+                            elide: Text.ElideRight
                         }
                     }
 
@@ -1747,7 +1889,7 @@ ShellRoot {
                                                 glyph: root.glyphs.refresh
                                                 accent: root.theme.good
                                                 compact: true
-                                                onClicked: root.runTokenMaxx(["refresh"])
+                                                onClicked: root.refreshAction()
                                             }
                                         }
                                     }
@@ -2113,6 +2255,7 @@ ShellRoot {
                         CardFrame {
                             Layout.preferredWidth: 260
                             Layout.fillHeight: true
+                            visible: !root.narrowLayout
                             accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
                             ColumnLayout {
@@ -2415,7 +2558,7 @@ ShellRoot {
 
                                         CodexButton { Layout.fillWidth: true; text: viewData.summary.notificationsLabel === "Notify on" ? "Notify Off" : "Notify On"; glyph: root.glyphs.bell; accent: viewData.summary.notificationsLabel === "Notify on" ? root.theme.info : root.theme.textMuted; compact: true; onClicked: root.notificationCommand(viewData.summary.notificationsLabel !== "Notify on") }
                                         CodexButton { Layout.fillWidth: true; text: viewData.summary.privacyLabel === "Privacy on" ? "Show ID" : "Hide ID"; glyph: root.glyphs.privacy; accent: viewData.summary.privacyLabel === "Privacy on" ? root.theme.warn : root.theme.textMuted; compact: true; onClicked: root.privacyCommand(viewData.summary.privacyLabel !== "Privacy on") }
-                                        CodexButton { Layout.fillWidth: true; text: "Status"; glyph: root.glyphs.status; accent: root.theme.info; compact: true; onClicked: root.runTokenMaxx(["status"]) }
+                                        CodexButton { Layout.fillWidth: true; text: "Status"; glyph: root.glyphs.status; accent: root.theme.info; compact: true; onClicked: root.scanCommand("status") }
                                     }
                                 }
                             }
@@ -2432,9 +2575,9 @@ ShellRoot {
                                 columnSpacing: 8
                                 rowSpacing: 8
 
-                                CodexButton { Layout.fillWidth: true; text: "Usage Scan"; glyph: root.glyphs.cost; accent: root.theme.warn; compact: true; onClicked: root.runTokenMaxx(["cost"]) }
-                                CodexButton { Layout.fillWidth: true; text: "Storage Scan"; glyph: root.glyphs.storage; accent: root.theme.info; compact: true; onClicked: root.runTokenMaxx(["storage"]) }
-                                CodexButton { Layout.fillWidth: true; text: "Refresh Now"; glyph: root.glyphs.refresh; accent: root.theme.good; compact: true; onClicked: root.runTokenMaxx(["refresh"]) }
+                                CodexButton { Layout.fillWidth: true; text: "Usage Scan"; glyph: root.glyphs.cost; accent: root.theme.warn; compact: true; onClicked: root.scanCommand("cost") }
+                                CodexButton { Layout.fillWidth: true; text: "Storage Scan"; glyph: root.glyphs.storage; accent: root.theme.info; compact: true; onClicked: root.scanCommand("storage") }
+                                CodexButton { Layout.fillWidth: true; text: "Refresh Now"; glyph: root.glyphs.refresh; accent: root.theme.good; compact: true; onClicked: root.refreshAction() }
                             }
 
                             SectionHeader {
@@ -2463,7 +2606,7 @@ ShellRoot {
                     CardFrame {
                         Layout.fillWidth: true
                         Layout.preferredHeight: root.dense ? 172 : 230
-                        visible: root.activeView === "detail"
+                        visible: root.activeView === "detail" && !root.narrowLayout
                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
                         ColumnLayout {
@@ -2500,7 +2643,7 @@ ShellRoot {
                                             enabled: !!(focusProvider() && focusProvider().enabled)
                                             onClicked: {
                                                 if (focusProvider()) {
-                                                    root.runTokenMaxx(["providers", "pin", focusProvider().id])
+                                                    root.setPinnedProvider(focusProvider().id)
                                                 }
                                             }
                                         }
@@ -2511,7 +2654,7 @@ ShellRoot {
                                             glyph: root.glyphs.auto
                                             accent: root.theme.info
                                             compact: true
-                                            onClicked: root.runTokenMaxx(["providers", "auto"])
+                                            onClicked: root.providerAutoCommand()
                                         }
 
                                         CodexButton {
@@ -2523,7 +2666,7 @@ ShellRoot {
                                             enabled: !!(focusProvider() && focusProvider().dashboardUrl)
                                             onClicked: {
                                                 if (focusProvider() && focusProvider().dashboardUrl) {
-                                                    root.runTokenMaxx(["open", "dashboard", focusProvider().id])
+                                                    root.dashboardCommand(focusProvider().id)
                                                 }
                                             }
                                         }
@@ -2736,7 +2879,7 @@ ShellRoot {
                                         glyph: root.glyphs.status
                                         accent: root.theme.info
                                         compact: true
-                                        onClicked: root.runTokenMaxx(["status"])
+                                        onClicked: root.scanCommand("status")
                                     }
 
                                     CodexButton {
@@ -2745,7 +2888,7 @@ ShellRoot {
                                         glyph: root.glyphs.cost
                                         accent: root.theme.warn
                                         compact: true
-                                        onClicked: root.runTokenMaxx(["cost"])
+                                        onClicked: root.scanCommand("cost")
                                     }
                                 }
                             }

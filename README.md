@@ -24,7 +24,7 @@ The current product is a Ruby CLI/backend, a resident snapshot daemon, a compact
 
 Provider fetches do not run inside Waybar. Waybar is only a render/action surface.
 
-The QuickShell panel is split into Overview, Provider Detail, History, and Settings views. It reads presenter data from `snapshot.json` and sends mutations back through the Ruby CLI. Provider toggles update config and the cached snapshot immediately; provider quota fetches happen through `tokenmaxx daemon`, `tokenmaxx refresh`, or `tokenmaxx usage`.
+The QuickShell panel is split into Overview, Provider Detail, History, and Settings views. It reads presenter data from `snapshot.json` and sends mutations back through the Ruby CLI. Provider toggles update config and the cached snapshot immediately; provider quota fetches happen through `tokenmaxx daemon`, `tokenmaxx refresh`, or `tokenmaxx usage`. Every panel action surfaces pending and terminal feedback on a status line, and command stderr is surfaced there instead of being swallowed; the panel queues mutations into a small FIFO so rapid clicks all land.
 
 The Waybar chip shows compact provider quota percentages and health classes only. Pace labels such as `reserve` and `hot`, and peak/off-peak labels, stay out of the bar; they appear in the QuickShell panel, provider detail cards, and the Waybar tooltip.
 
