@@ -287,8 +287,8 @@ class QuickShellTest < Minitest::Test
     assert_match(/function cardHeight\(\) \{(.*)\n    \}/m, qml_source, "the drop-down needs a counted cardHeight()")
 
     function_body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
-    assert_match(/Math\.min\(overviewProviders\(\)\.length, 4\)/, function_body,
-                 "overview rows are counted with a visible cap, not from content implicit sizes")
+    assert_match(/providerGridRows\(\) \* \(isCompact/, function_body,
+                 "overview rows are counted through the grid-wrap helper, not from content implicit sizes")
     assert_includes function_body, "isCompact() ? 560 : 640"
     assert_match(/Math\.max\(430, Math\.min\(root\.dropDownMaxHeight, available, content\)/, function_body,
                  "the counted height carries a floor, the drop-down cap, and the screen-room yield")
@@ -452,5 +452,43 @@ class QuickShellTest < Minitest::Test
     end
 
     @qml_rectangles = blocks
+  end
+end
+
+class ShowHideStabilityTest < Minitest::Test
+  def qml
+    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+  end
+
+  # Showing or hiding a provider must never re-skin the card: the compact
+  # decision reads the screen only, never the shown-provider count, and the
+  # counted height grows by rows (to the 8-row cap) instead of flipping
+  # chrome. Dataset changes move content; they do not move layout rules.
+  def test_layout_rules_cannot_depend_on_the_shown_provider_count
+    refute_match(/overviewProviders\(\)\.length > \d+/, qml,
+      "the compact breakpoint must not read the snapshot's provider count")
+    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    assert_includes height_body, "providerGridRows()"
+  end
+end
+
+class ProviderRowWrapTest < Minitest::Test
+  def qml
+    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+  end
+
+  # The overview row must WRAP when the shown-provider count grows: six
+  # shown providers squeezed into one row render 90px-wide cards whose
+  # every label elides. The row is a Grid (3 columns relaxed, 2 compact)
+  # with the counted height charging every row band.
+  def test_provider_cards_wrap_when_the_shown_count_grows
+    row_block = qml[/component ProviderRowWrap|GridLayout \{\n\s*id: providerGrid\n[\s\S]*?\n\s*\}\n\s*\}\n/m, 0]
+    assert_match(/id: providerGrid/, qml, "the provider grid must exist")
+    grid_block = qml[/id: providerGrid(.*?)Repeater/m, 1].to_s
+    assert_match(/columns:\s*root\.dense \? 2 : 3/, grid_block, "grid column count must follow the compact breakpoint, not the provider count")
+    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    assert_match(/providerGridRows\(\)/, height_body, "cardHeight must count grid rows via the named helper")
+    refute_match(/overviewProviders\(\)\.length .*\* \(isCompact/, height_body,
+      "the flat row count must not return")
   end
 end

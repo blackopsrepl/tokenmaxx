@@ -129,12 +129,13 @@ ShellRoot {
     }
 
     function isCompact() {
-        // The tight-chrome decision reads raw layout inputs (snapshot
-        // provider count, screen size), never the card's own resolved
-        // height — a cardHeight()→dense→cardHeight() chain is a binding
-        // loop the scene warns about on every render.
+        // The tight-chrome decision reads ONLY the screen: the shown-provider
+        // count used to participate (length > 4), so every show/hide toggle
+        // re-skinned the whole card — rail height, header stack, spacings —
+        // on top of re-counting the rows. A dataset flip is not a layout
+        // breakpoint; the rows are counted and the list scrolls instead.
         var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
-        return screenHeight < 820 || overviewProviders().length > 4
+        return screenHeight < 820
     }
 
     function isNarrow() {
@@ -142,12 +143,22 @@ ShellRoot {
         return screenWidth - 48 < 720
     }
 
+    function providerGridRows() {
+        // The overview cards wrap into a grid (3 wide, 2 compact): the
+        // counted height charges each WRAPPED row, so showing more
+        // providers grows the card by whole rows instead of squeezing
+        // one row of cards into unreadable slivers.
+        var shown = Math.min(overviewProviders().length, 8)
+        var columns = isCompact() ? 2 : 3
+        return Math.max(1, Math.ceil(shown / columns))
+    }
+
     function cardHeight() {
         // Counted: overview provider cards (capped at 4 visible) + the
         // detail action rail card when present + fixed chrome (header, view
         // tabs, status row, heatmap card, display band, margins ≈ 620
         // relaxed / 540 compact, minus the rail card when narrow).
-        var overviewRows = Math.min(overviewProviders().length, 4) * (isCompact() ? 106 : 150)
+        var overviewRows = providerGridRows() * (isCompact() ? 106 : 150)
         var railCard = isNarrow() ? 0 : (isCompact() ? 176 : 252)
         var chrome = (isCompact() ? 560 : 640) - railCard
         var content = overviewRows + chrome
@@ -1797,9 +1808,12 @@ ShellRoot {
                                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
                                     }
 
-                                    RowLayout {
+                                    GridLayout {
+                                        id: providerGrid
                                         Layout.fillWidth: true
-                                        spacing: 8
+                                        columns: root.dense ? 2 : 3
+                                        columnSpacing: 8
+                                        rowSpacing: 8
 
                                         Repeater {
                                             model: root.overviewProviders()
