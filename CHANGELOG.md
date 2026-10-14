@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.5.1](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.0...v2.5.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **panel:** the provider overview wraps; the layout rules stopped reading the dataset 0dd00c3
+
 ## [2.5.0](https://github.com/blackopsrepl/tokenmaxx/compare/v2.4.0...v2.5.0) (2026-10-14)
 
 ## [2.4.0](https://github.com/blackopsrepl/tokenmaxx/compare/v2.3.0...v2.4.0) (2026-10-14)
