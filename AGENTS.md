@@ -67,7 +67,7 @@
 - QuickShell Overview must render enabled, visible, `showInOverview` providers only, with no fixed provider cap.
 - The provider rail may show all configured providers so inactive or hidden providers can be managed.
 - Provider action controls should queue rather than kill in-flight CLI actions.
-- The QuickShell panel is a modal overlay. It must stay above windows, ignore layer-shell exclusion, and remain vertically relaxed.
+- The QuickShell panel is a bounded bar drop-down, not a screen overlay: it hangs from the bar edge (chip's side, left-of-center), stays above windows, ignores layer-shell exclusion, and its surface is exactly the card rect; the desktop outside it stays interactive.
 - Gemini detail views must preserve model-level quota and local usage rows where presenter data provides them.
 - Overview cards render an equivalent compact summary for every provider: window providers show `5h X% / W Y%` from the five-hour and weekly lanes, model-meter providers show their dominant model, and providers with a provider-declared lane label use it (for example Ollama Cloud's `mo X%` monthly allowance).
 - Retained history must stay provider-shaped: model-meter providers keep per-model quota in `modelQuota`/`modelUsage` and never synthesize window lanes, and days with no quota sample and no local usage are omitted so the History view falls back to its empty state.
