@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.5.3](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.2...v2.5.3) (2026-10-14)
+
+
+### Features
+
+* **panel:** give providers full-width pages instead of nested scrolling d8ea774
+
+
+### Bug Fixes
+
+* **panel:** keep provider views stable and make overflow scrollable d61df53
+* **panel:** restore the vertical budget without changing the layout 282d8bd
+
 ## [2.5.2](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.1...v2.5.2) (2026-10-14)
 
 
