@@ -367,4 +367,62 @@ class QuickShellTest < Minitest::Test
     assert_match(/the surface is transparent only over the card's own rect/, ui_doc,
                  "the transparent-card-surface note belongs in the UI docs")
   end
+  # Family uniformity (the six *-bar sibling panels, modelled on this
+  # panel's square-cornered mac-bar aesthetic): every Rectangle that
+  # shapes a card, button, tab, badge, bar, or the panel shadow renders
+  # with zero corner radius. The only nonzero radii left are shapes that
+  # ARE dots, not corner rounding: circles-that-are-dots (the 7px
+  # live/status dots at radius 3.5) and thin status stripes (radius
+  # 1/1.5/2 on slivers of at most 8px). Any other radius leaks the old
+  # rounded look back in.
+  def test_family_surfaces_render_square_outside_dot_and_stripe_shapes
+    strays = []
+
+    qml_rectangles.each do |line_no, block|
+      block.match(/^\s*radius:\s*([0-9.]+)\b/) or next
+      radius = Regexp.last_match(1).to_f
+      next if radius.zero?
+
+      width = block[/(?:^|\s)(?:Layout\.preferred)?(?:W|w)idth:\s*([0-9.]+)\b/, 1]
+      height = block[/(?:^|\s)(?:Layout\.preferred)?(?:H|h)eight:\s*([0-9.]+)\b/, 1]
+      is_dot = width && height && width.to_f == height.to_f &&
+               width.to_f <= 12 && radius == width.to_f / 2
+      is_stripe = radius <= 2.0 && block[/\bheight:\s*([1-8](?:\.\d+)?)\b/, 1]
+
+      strays << "line #{line_no}: radius #{radius}" unless is_dot || is_stripe
+    end
+
+    assert_empty strays.uniq,
+                 "rounded corners leaked back into the square family surface: #{strays.uniq.join(', ')}"
+  end
+
+  # Smallest enclosing Rectangle-derived block for every `Rectangle {`
+  # (component tail like `component CardFrame: Rectangle {` and property
+  # tails like `background: Rectangle {` included), as [line_no, block].
+  def qml_rectangles
+    return @qml_rectangles if @qml_rectangles
+
+    blocks = []
+    lines = qml_source.lines
+    index = 0
+    while index < lines.length
+      unless lines[index] =~ /^\s*(?:component\s+\w+\s*:\s*|[\w.]+:\s*)?Rectangle\s*\{/
+        index += 1
+        next
+      end
+
+      depth = lines[index].count("{") - lines[index].count("}")
+      body = [+lines[index]]
+      close = index + 1
+      while depth.positive? && close < lines.length
+        depth += lines[close].count("{") - lines[close].count("}")
+        body << lines[close]
+        close += 1
+      end
+      blocks << [index + 1, body.join]
+      index = close
+    end
+
+    @qml_rectangles = blocks
+  end
 end

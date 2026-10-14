@@ -778,7 +778,7 @@ ShellRoot {
         implicitWidth: Math.max(minimumWidth, contentItem.implicitWidth + 18)
 
         background: Rectangle {
-            radius: 3
+            radius: 0
             color: control.down ? withAlpha(control.accent, 0.26) : (control.hovered ? withAlpha(control.accent, 0.18) : withAlpha(control.accent, 0.10))
             border.color: control.hovered ? withAlpha(control.accent, 0.60) : withAlpha(control.accent, 0.34)
             border.width: 1
@@ -841,7 +841,7 @@ ShellRoot {
         onClicked: root.setView(view)
 
         background: Rectangle {
-            radius: 3
+            radius: 0
             color: tab.selected ? withAlpha(tab.accent, 0.24) : (tab.hovered ? withAlpha(tab.accent, 0.14) : root.theme.surface)
             border.width: 1
             border.color: tab.selected ? withAlpha(tab.accent, 0.70) : withAlpha(tab.accent, 0.24)
@@ -996,7 +996,7 @@ ShellRoot {
     component CardFrame: Rectangle {
         id: card
         property color accent: root.theme.good
-        radius: 4
+        radius: 0
         color: root.theme.surfaceHi
         border.width: 1
         border.color: withAlpha(accent, 0.28)
@@ -1464,7 +1464,7 @@ ShellRoot {
             anchors.rightMargin: -2
             height: modalFrame.height + 4
             color: Qt.rgba(0, 0, 0, 0.34)
-            radius: 6
+            radius: 0
             visible: modalFrame.visible
         }
 
