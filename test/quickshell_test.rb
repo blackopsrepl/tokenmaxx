@@ -206,7 +206,7 @@ class QuickShellTest < Minitest::Test
   # fixed preferredWidth 500; on a narrow viewport it would leave the status
   # column an unreadable sliver, so it drops out with the compact layout too.
   def test_detail_action_rail_drops_out_when_narrow
-    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 176 : 252\n([\s\S]*?)\n                    \}\n                \}\n/m, 1]
+    rail = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: 176\n([\s\S]*?)\n                    \}\n                \}\n/m, 1]
 
     refute_nil rail, "the detail action rail card block must exist"
     assert_match(/visible: root\.activeView === "detail" && !root\.narrowLayout/, rail, "the fixed-width action rail must drop out on narrow viewports")
@@ -270,8 +270,8 @@ class QuickShellTest < Minitest::Test
     assert_includes qml_source, "property int dropDownTopMargin: 52"
     assert_match(/implicitWidth: root\.cardWidth\(\)/, window,
                  "the surface is exactly the card's width — not the bar's, not the screen's")
-    assert_match(/implicitHeight: root\.cardHeight\(\) \+ root\.dropDownTopMargin/, window,
-                 "the surface height is the counted card height plus the bar strip")
+    assert_match(/implicitHeight: root\.cardHeight\(\)/, window,
+                 "the surface height equals the card, with bar placement applied only by margins")
     refute_match(/anchors\.centerIn: parent/, window[/[\s\S]*?(?=
         FocusScope \{)/] || "", "the drop-down hangs from the bar, never floats centered mid-screen")
     refute_match(/mask:\s*Region/, window, "a bounded surface needs no clipped input mask; its own rect is the mask")
@@ -283,17 +283,13 @@ class QuickShellTest < Minitest::Test
   # chrome, view-tab row, action row, badge stack and provider cards —
   # never from layout implicit sizes, and it is capped so the card stays a
   # bar drop-down rather than growing toward the screen height.
-  def test_card_height_is_counted_and_capped_to_the_viewport
-    assert_match(/function cardHeight\(\) \{(.*)\n    \}/m, qml_source, "the drop-down needs a counted cardHeight()")
-
-    function_body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
-    assert_match(/providerGridRows\(\) \* \(isCompact/, function_body,
-                 "overview rows are counted through the grid-wrap helper, not from content implicit sizes")
-    assert_includes function_body, "isCompact() ? 560 : 640"
-    assert_match(/Math\.max\(430, Math\.min\(root\.dropDownMaxHeight, available, content\)/, function_body,
-                 "the counted height carries a floor, the drop-down cap, and the screen-room yield")
-    assert_includes qml_source, "property int dropDownMaxHeight: 1180",
-                    "the cap must be a real height, never the screen height, so the card stays a bar drop-down"
+  def test_card_height_is_stable_and_capped_to_the_viewport
+    body = qml_source[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    refute_nil body
+    assert_includes body, "return Math.min(root.dropDownMaxHeight, available)"
+    assert_includes body, "screenHeight - root.dropDownTopMargin - 12"
+    refute_match(/activeView|overviewProviders|providerGrid|railCard/, body)
+    assert_includes qml_source, "property int dropDownMaxHeight: 820"
   end
 
   # The bar strip between the compositor's bar and the card is part of the
@@ -301,18 +297,11 @@ class QuickShellTest < Minitest::Test
   # keeps its own catcher so dead space inside it stays inert. No
   # screen-wide Item, scrim, halo stack, or backdrop outside the card may
   # come back.
-  def test_bounded_surface_dismisses_from_the_bar_strip_and_card_keeps_focus
-    window = qml_source[/PanelWindow \{\n        id: panelWindow\n([\s\S]*)\n    \}\n\}\n\z/m, 1]
-    card = qml_source[/FocusScope \{\n            id: modalFrame\n([\s\S]*?)(?:\n    \}\n\}\n\z|\n    \}\n\}\n\z)/m, 1]
-    refute_nil card, "the card must sit inside the bounded PanelWindow"
-
-    assert_match(/Rectangle \{\n            id: barStrip[\s\S]*?MouseArea \{\n                anchors\.fill: parent\n                onClicked: root\.closePanel\(\)/, window,
-                 "the strip between the bar and the card dismisses on click")
-    assert_includes card, "anchors.topMargin: root.dropDownTopMargin"
-    assert_includes card, "height: root.cardHeight()"
-    refute_match(/Qt\.rgba\(0, 0, 0, 0\.22\)/, qml_source,
-                 "the old scrim/halo stack must be gone from the bounded surface")
-    assert_match(/id: frameShadow/, window, "the drop-down hangs with a real shadow under the bar edge")
+  def test_bounded_surface_applies_the_bar_margin_once
+    assert_includes qml_source, "implicitHeight: root.cardHeight()"
+    assert_includes qml_source, "anchors.topMargin: 0"
+    refute_includes qml_source, "id: barStrip"
+    assert_includes qml_source, "Keys.onEscapePressed: root.closePanel()"
   end
 
   # Keyboard dismissal is carried by the card's escape handler — the card is
@@ -329,7 +318,7 @@ class QuickShellTest < Minitest::Test
   # and family-styled labelled Refresh/Close action buttons replace the
   # glyph-only buttons.
   def test_header_carries_the_live_dot_and_family_buttons
-    header = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 62 : 84\n(.*?)\n                        \}\n                    \}/m, 1]
+    header = qml_source[/CardFrame \{\n                        Layout\.fillWidth: true\n                        Layout\.preferredHeight: root\.dense \? 78 : 84\n(.*?)\n                        \}\n                    \}/m, 1]
     refute_nil header, "the header card block must exist"
 
     assert_match(/id: liveDot/, header, "the header needs the live dot")
@@ -358,7 +347,7 @@ class QuickShellTest < Minitest::Test
     assert_match(/bounded bar drop-down/, ui_doc, "the shape belongs in the UI docs")
     assert_match(/hangs from the bar edge on the same side its Waybar chip occupies/, ui_doc,
                  "the chip-side placement contract belongs in the UI docs")
-    assert_match(/its height is counted from the laid-out parts and capped to the viewport/i, ui_doc,
+    assert_match(/Its height is stable across views and provider counts/i, ui_doc,
                  "the counted-height contract belongs in the UI docs")
     assert_match(/The desktop outside the surface stays interactive/, ui_doc,
                  "the bounded-surface interactivity contract belongs in the UI docs")
@@ -455,58 +444,35 @@ class QuickShellTest < Minitest::Test
   end
 end
 
-class ShowHideStabilityTest < Minitest::Test
+class ProviderLayoutStabilityTest < Minitest::Test
   def qml
-    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+    File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
   end
 
-  # Showing or hiding a provider must never re-skin the card: the compact
-  # decision reads the screen only, never the shown-provider count, and the
-  # counted height grows by rows (to the 8-row cap) instead of flipping
-  # chrome. Dataset changes move content; they do not move layout rules.
-  def test_layout_rules_cannot_depend_on_the_shown_provider_count
-    refute_match(/overviewProviders\(\)\.length > \d+/, qml,
-      "the compact breakpoint must not read the snapshot's provider count")
-    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
-    assert_includes height_body, "providerGridRows()"
-  end
-end
-
-class ProviderRowWrapTest < Minitest::Test
-  def qml
-    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+  def test_no_provider_count_or_view_can_resize_the_surface
+    body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    refute_match(/activeView|providerGrid|overviewProviders|railCard/, body)
+    compact = qml[/function isCompact\(\) \{(.*?)\n    \}/m, 1]
+    refute_match(/overviewProviders\(\)\.length/, compact)
   end
 
-  # The overview row must WRAP when the shown-provider count grows: six
-  # shown providers squeezed into one row render 90px-wide cards whose
-  # every label elides. The row is a Grid (3 columns relaxed, 2 compact)
-  # with the counted height charging every row band.
-  def test_provider_cards_wrap_when_the_shown_count_grows
-    row_block = qml[/component ProviderRowWrap|GridLayout \{\n\s*id: providerGrid\n[\s\S]*?\n\s*\}\n\s*\}\n/m, 0]
-    assert_match(/id: providerGrid/, qml, "the provider grid must exist")
-    grid_block = qml[/id: providerGrid(.*?)Repeater/m, 1].to_s
-    assert_match(/columns:\s*root\.dense \? 2 : 3/, grid_block, "grid column count must follow the compact breakpoint, not the provider count")
-    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
-    assert_match(/providerGridRows\(\)/, height_body, "cardHeight must count grid rows via the named helper")
-    refute_match(/overviewProviders\(\)\.length .*\* \(isCompact/, height_body,
-      "the flat row count must not return")
-  end
-end
-
-class ViewAwareHeightTest < Minitest::Test
-  def qml
-    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+  def test_grid_uses_available_width_and_equal_columns
+    block = qml[/id: providerGrid(.*?)Repeater/m, 1]
+    assert_includes block, "uniformCellWidths: true"
+    assert_includes block, "Math.floor((width + 8) / 228)"
+    assert_includes qml, '" providers"'
+    assert_includes qml, '" · scroll"'
   end
 
-  # The counted rows belong to the overview; charging them in detail bought
-  # a dead band at the card bottom while Qt starved the visible cards. The
-  # rail card is the detail's own extra band and is charged only there.
-  def test_height_charges_each_view_for_what_it_lays_out
-    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
-    refute_empty height_body
-    assert_match(/root\.activeView === "overview" \? providerGridRows\(\)/, height_body,
-      "row bands must be charged to the overview alone")
-    assert_match(/root\.activeView === "detail" \? railCard : 0/, height_body,
-      "the action-rail band must be charged to the detail view alone")
+  def test_scroll_views_have_explicit_content_heights
+    { "overviewScroll" => "overviewContent.implicitHeight + 24",
+      "detailScroll" => "detailContent.implicitHeight + 24",
+      "providerScroll" => "providerList.implicitHeight" }.each do |id, height|
+      assert_includes qml, "id: #{id}\n                                    contentHeight: #{height}"
+    end
+  end
+
+  def test_detail_actions_do_not_consume_the_reading_viewport
+    assert_match(/Layout\.preferredHeight: 176\s+visible: root\.activeView === "detail"/, qml)
   end
 end

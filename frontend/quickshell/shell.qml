@@ -113,12 +113,10 @@ ShellRoot {
     // Bounded bar drop-down: the layer surface is exactly the card's rect
     // below the bar edge (top-anchored, no bottom/right anchors — those force
     // a full-screen surface), so the panel never covers apps or the screen.
-    // The height is counted from laid-out parts, never measured from implicit
-    // sizes (a ListView and a fillHeight pane both report a near-zero
-    // implicit height, which is how the old panel collapsed and why the frame
-    // was screen-shaped instead of work-shaped).
+    // Reserve one stable reading surface for every view and provider count.
+    // Flexible scroll panes must not be used to shrink-wrap the window.
     property int dropDownTopMargin: 52
-    property int dropDownMaxHeight: 1180
+    property int dropDownMaxHeight: 820
 
     function cardWidth() {
         // Reads the SCREEN's width, never panelWindow.width: the surface's
@@ -143,34 +141,15 @@ ShellRoot {
         return screenWidth - 48 < 720
     }
 
-    function providerGridRows() {
-        // The overview cards wrap into a grid (3 wide, 2 compact): the
-        // counted height charges each WRAPPED row, so showing more
-        // providers grows the card by whole rows instead of squeezing
-        // one row of cards into unreadable slivers.
-        var shown = Math.min(overviewProviders().length, 8)
-        var columns = isCompact() ? 2 : 3
-        return Math.max(1, Math.ceil(shown / columns))
-    }
-
     function cardHeight() {
-        // Counted: overview provider cards (capped at 4 visible) + the
-        // detail action rail card when present + fixed chrome (header, view
-        // tabs, status row, heatmap card, display band, margins ≈ 620
-        // relaxed / 540 compact, minus the rail card when narrow).
-        // Only the overview view lays out the counted rows; the detail view
-        // hides that card, so charging its rows there bought a dead band at
-        // the card's bottom and starved the visible cards' scroll viewport.
-        var overviewRows = root.activeView === "overview" ? providerGridRows() * (isCompact() ? 106 : 150) : 0
-        var railCard = isNarrow() ? 0 : (isCompact() ? 176 : 252)
-        var chrome = (isCompact() ? 560 : 640) - railCard
-        var content = overviewRows + chrome + (root.activeView === "detail" ? railCard : 0)
+        // One stable surface across all views and provider configurations.
+        // Reserve a useful scroll viewport above the detail controls; never
+        // borrow its height from the number of overview cards.
         var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
-        var available = screenHeight - root.dropDownTopMargin - 12
-        return Math.max(430, Math.min(root.dropDownMaxHeight, available, content))
+        var available = Math.max(1, screenHeight - root.dropDownTopMargin - 12)
+        return Math.min(root.dropDownMaxHeight, available)
     }
-    // Bounded surface: the drop-down is card-sized, so the breakpoints read
-    // the card's own geometry rather than a full-screen surface's.
+    // Density reads screen dimensions only, never the number of providers.
     property bool dense: isCompact()
     // Narrow viewports (split screens, half-tiled windows) starve the detail
     // column when the fixed 260 provider rail sits beside it, so the compact
@@ -1414,14 +1393,14 @@ ShellRoot {
         color: "transparent"
         // Bounded bar drop-down: the surface IS the card's rect below the bar
         // edge — no scrim, no screen-sized mask, nothing painted over the
-        // desktop. Layer surfaces are opaque to input, so the transparent
-        // bar-strip Rectangle carries dismissal; Esc and Close remain.
+        // desktop. Layer surfaces are opaque to input; Esc and Close dismiss
+        // the panel while clicks beside it reach the desktop.
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
         aboveWindows: true
         exclusionMode: ExclusionMode.Ignore
 
         implicitWidth: root.cardWidth()
-        implicitHeight: root.cardHeight() + root.dropDownTopMargin
+        implicitHeight: root.cardHeight()
 
         anchors {
             top: true
@@ -1455,20 +1434,6 @@ ShellRoot {
         }
 
         Rectangle {
-            id: barStrip
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: root.dropDownTopMargin
-            color: "transparent"
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.closePanel()
-            }
-        }
-
-        Rectangle {
             id: frameShadow
             anchors.top: modalFrame.top
             anchors.left: modalFrame.left
@@ -1487,7 +1452,7 @@ ShellRoot {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.topMargin: root.dropDownTopMargin
+            anchors.topMargin: 0
             height: root.cardHeight()
             width: parent.width
             clip: false
@@ -1520,7 +1485,7 @@ ShellRoot {
 
                     CardFrame {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.dense ? 62 : 84
+                        Layout.preferredHeight: root.dense ? 78 : 84
                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
                         RowLayout {
@@ -1730,6 +1695,7 @@ ShellRoot {
 
                                 ScrollView {
                                     id: overviewScroll
+                                    contentHeight: overviewContent.implicitHeight + 24
                                     anchors.fill: parent
                                     anchors.margins: 2
                                     clip: true
@@ -1750,6 +1716,7 @@ ShellRoot {
                                             spacing: root.dense ? 8 : 12
 
                                     RowLayout {
+                                        Layout.fillWidth: true
                                         spacing: 8
 
                                         Text {
@@ -1761,10 +1728,18 @@ ShellRoot {
 
                                         Label {
                                             text: "Overview"
-                                            color: root.theme.text
+                                            color: root.theme.info
                                             font.family: root.textFont
                                             font.pixelSize: 12
                                             font.bold: true
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                        Label {
+                                            text: root.overviewProviders().length + " providers" +
+                                                (overviewContent.implicitHeight + 24 > overviewScroll.availableHeight ? " · scroll" : "")
+                                            color: root.theme.textDim
+                                            font.family: root.textFont
+                                            font.pixelSize: 9
                                         }
                                     }
 
@@ -1814,7 +1789,8 @@ ShellRoot {
                                     GridLayout {
                                         id: providerGrid
                                         Layout.fillWidth: true
-                                        columns: root.dense ? 2 : 3
+                                        uniformCellWidths: true
+                                        columns: Math.max(1, Math.min(3, Math.floor((width + 8) / 228)))
                                         columnSpacing: 8
                                         rowSpacing: 8
 
@@ -2003,6 +1979,7 @@ ShellRoot {
 
                                 ScrollView {
                                     id: detailScroll
+                                    contentHeight: detailContent.implicitHeight + 24
                                     anchors.fill: parent
                                     anchors.margins: 2
                                     clip: true
@@ -2381,6 +2358,7 @@ ShellRoot {
 
                                 ScrollView {
                                     id: providerScroll
+                                    contentHeight: providerList.implicitHeight
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     clip: true
@@ -2702,7 +2680,7 @@ ShellRoot {
 
                     CardFrame {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: root.dense ? 176 : 252
+                        Layout.preferredHeight: 176
                         visible: root.activeView === "detail" && !root.narrowLayout
                         accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
