@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [2.5.2](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.1...v2.5.2) (2026-10-14)
+
+
+### Bug Fixes
+
+* **panel:** the counted height charges each view for what it lays out ee9c8e1
+
 ## [2.5.1](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.0...v2.5.1) (2026-10-14)
 
 

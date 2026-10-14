@@ -17,7 +17,7 @@ module TokenMaxx
 
         begin
           rpc = RpcClient.new
-          rpc.initialize_client("tokenmaxx-linux", "2.5.1")
+          rpc.initialize_client("tokenmaxx-linux", "2.5.2")
           limits = rpc.fetch_rate_limits
           account = rpc.fetch_account rescue nil
           windows = rate_limit_windows(limits)
