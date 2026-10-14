@@ -193,9 +193,9 @@ class QuickShellTest < Minitest::Test
     assert_match(/function cardWidth\(\)/, qml_source, "the card carries a content-fit width function")
     assert_match(/Math\.max\(560,/, qml_source, "the card width keeps a usable narrow floor")
 
-    rail = qml_source[/CardFrame \{\n                            Layout\.preferredWidth: 260\n(.*?)\n                        \}\n                    \}\n\n                    CardFrame \{/m, 1]
-    refute_nil rail, "the provider rail card block must exist"
-    assert_match(/visible: !root\.narrowLayout/, rail, "the rail must drop out under the width breakpoint")
+    refute_includes qml_source, "Layout.preferredWidth: 260"
+    assert_includes qml_source, "id: providerPicker"
+    assert_includes qml_source, "model: root.providerViews"
 
     header_badges = qml_source[/RowLayout \{\n                                Layout\.alignment: Qt\.AlignRight\n(.*?)minimumWidth: 34\n/m, 1]
     refute_nil header_badges, "the header badge stack must exist"
@@ -459,15 +459,14 @@ class ProviderLayoutStabilityTest < Minitest::Test
   def test_grid_uses_available_width_and_equal_columns
     block = qml[/id: providerGrid(.*?)Repeater/m, 1]
     assert_includes block, "uniformCellWidths: true"
-    assert_includes block, "Math.floor((width + 8) / 228)"
-    assert_includes qml, '" providers"'
-    assert_includes qml, '" · scroll"'
+    assert_includes block, "columns: root.overviewPageSize()"
+    assert_includes qml, "model: root.overviewPageProviders()"
+    assert_includes qml, 'text: "Next"'
   end
 
   def test_scroll_views_have_explicit_content_heights
     { "overviewScroll" => "overviewContent.implicitHeight + 24",
-      "detailScroll" => "detailContent.implicitHeight + 24",
-      "providerScroll" => "providerList.implicitHeight" }.each do |id, height|
+      "detailScroll" => "detailContent.implicitHeight + 24" }.each do |id, height|
       assert_includes qml, "id: #{id}\n                                    contentHeight: #{height}"
     end
   end

@@ -109,6 +109,21 @@ ShellRoot {
     property var providerViews: viewData.providers || []
     property string focusProviderId: ""
     property string activeView: "overview"
+    property int overviewPage: 0
+
+    function overviewPageSize() {
+        return Math.max(1, Math.min(3, Math.floor((cardWidth() - 72) / 280)))
+    }
+
+    function overviewPageCount() {
+        return Math.max(1, Math.ceil(overviewProviders().length / overviewPageSize()))
+    }
+
+    function overviewPageProviders() {
+        var first = overviewPage * overviewPageSize()
+        return overviewProviders().slice(first, first + overviewPageSize())
+    }
+
 
     // Bounded bar drop-down: the layer surface is exactly the card's rect
     // below the bar edge (top-anchored, no bottom/right anchors — those force
@@ -123,7 +138,7 @@ ShellRoot {
         // own width participates in its sizing and a window read is a
         // binding loop.
         var screenWidth = panelWindow.screen ? panelWindow.screen.width : 1440
-        return Math.min(960, Math.max(560, screenWidth - 48))
+        return Math.min(1160, Math.max(560, screenWidth - 48))
     }
 
     function isCompact() {
@@ -1381,6 +1396,7 @@ ShellRoot {
         }
 
     onProviderViewsChanged: {
+        overviewPage = Math.min(overviewPage, Math.max(0, overviewPageCount() - 1))
         if (!findProvider(focusProviderId)) {
             syncFocus()
         }
@@ -1651,6 +1667,77 @@ ShellRoot {
 
                         Item { Layout.fillWidth: true }
 
+                        ComboBox {
+                            id: providerPicker
+                            Layout.preferredWidth: 220
+                            Layout.preferredHeight: 32
+                            model: root.providerViews
+                            textRole: "label"
+                            font.family: root.textFont
+                            font.pixelSize: 11
+                            currentIndex: {
+                                for (var i = 0; i < root.providerViews.length; i++) {
+                                    if (root.providerViews[i].id === root.focusProviderId) return i
+                                }
+                                return -1
+                            }
+                            onActivated: { root.setFocus(root.providerViews[index].id); root.setView("detail") }
+                            background: Rectangle { radius: 0; color: root.theme.surface; border.color: root.theme.border }
+                            contentItem: Text {
+                                text: providerPicker.displayText
+                                color: root.theme.text
+                                font.family: root.textFont
+                                font.pixelSize: 11
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: 12
+                                rightPadding: 24
+                                elide: Text.ElideRight
+                            }
+                            delegate: ItemDelegate {
+                                id: providerOption
+                                width: providerPicker.width
+                                text: modelData.label
+                                contentItem: Text {
+                                    text: providerOption.text
+                                    color: root.theme.text
+                                    font.family: root.textFont
+                                    font.pixelSize: 11
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                font.family: root.textFont
+                                font.pixelSize: 11
+                                highlighted: providerPicker.highlightedIndex === index
+                                background: Rectangle { radius: 0; color: parent.highlighted ? root.theme.surfaceHi : root.theme.surface }
+                            }
+                            popup: Popup {
+                                y: providerPicker.height
+                                width: providerPicker.width
+                                padding: 1
+                                background: Rectangle { radius: 0; color: root.theme.surface; border.color: root.theme.border }
+                                contentItem: ListView {
+                                    implicitHeight: contentHeight
+                                    model: providerPicker.popup.visible ? providerPicker.delegateModel : null
+                                    clip: true
+                                    currentIndex: providerPicker.highlightedIndex
+                                }
+                            }
+                        }
+                        CodexButton {
+                            text: "↑"
+                            compact: true
+                            visible: root.activeView === "detail"
+                            ToolTip.text: "Previous detail section"
+                            onClicked: detailScroll.contentItem.contentY = Math.max(0, detailScroll.contentItem.contentY - detailScroll.availableHeight * 0.75)
+                        }
+                        CodexButton {
+                            id: nextDetailSection
+                            text: "↓"
+                            compact: true
+                            visible: root.activeView === "detail"
+                            ToolTip.text: "Next detail section"
+                            onClicked: detailScroll.contentItem.contentY = Math.min(Math.max(0, detailScroll.contentHeight - detailScroll.availableHeight), detailScroll.contentItem.contentY + detailScroll.availableHeight * 0.75)
+                        }
+
                         BadgePill {
                             visible: !root.denseHeader
                             text: focusProvider() ? focusProvider().status : "loading"
@@ -1701,7 +1788,7 @@ ShellRoot {
                                     clip: true
                                     contentWidth: availableWidth
                                     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                                    ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
                                     Item {
                                         width: overviewScroll.availableWidth
@@ -1735,11 +1822,23 @@ ShellRoot {
                                         }
                                         Item { Layout.fillWidth: true }
                                         Label {
-                                            text: root.overviewProviders().length + " providers" +
-                                                (overviewContent.implicitHeight + 24 > overviewScroll.availableHeight ? " · scroll" : "")
+                                            text: root.overviewProviders().length + " providers · page " + (root.overviewPage + 1) + "/" + root.overviewPageCount()
                                             color: root.theme.textDim
                                             font.family: root.textFont
-                                            font.pixelSize: 9
+                                            font.pixelSize: 10
+                                        }
+                                        CodexButton {
+                                            text: "Previous"
+                                            compact: true
+                                            enabled: root.overviewPage > 0
+                                            onClicked: { root.overviewPage--; overviewScroll.contentItem.contentY = 0 }
+                                        }
+                                        CodexButton {
+                                            id: nextProviderPage
+                                            text: "Next"
+                                            compact: true
+                                            enabled: root.overviewPage + 1 < root.overviewPageCount()
+                                            onClicked: { root.overviewPage++; overviewScroll.contentItem.contentY = 0 }
                                         }
                                     }
 
@@ -1790,12 +1889,12 @@ ShellRoot {
                                         id: providerGrid
                                         Layout.fillWidth: true
                                         uniformCellWidths: true
-                                        columns: Math.max(1, Math.min(3, Math.floor((width + 8) / 228)))
+                                        columns: root.overviewPageSize()
                                         columnSpacing: 8
                                         rowSpacing: 8
 
                                         Repeater {
-                                            model: root.overviewProviders()
+                                            model: root.overviewPageProviders()
 
                                             delegate: CardFrame {
                                                 required property var modelData
@@ -1985,7 +2084,7 @@ ShellRoot {
                                     clip: true
                                     contentWidth: availableWidth
                                     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                                    ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
                                     Item {
                                         width: detailScroll.availableWidth
@@ -2326,63 +2425,7 @@ ShellRoot {
                             }
                         }
 
-                        CardFrame {
-                            Layout.preferredWidth: 260
-                            Layout.fillHeight: true
-                            visible: !root.narrowLayout
-                            accent: focusProvider() ? statusColor(focusProvider()) : root.theme.good
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 12
-
-                                RowLayout {
-                                    spacing: 8
-
-                                    Text {
-                                        text: root.glyphs.provider
-                                        color: root.theme.text
-                                        font.family: root.iconFont
-                                        font.pixelSize: 12
-                                    }
-
-                                    Label {
-                                        text: "Providers"
-                                        color: root.theme.text
-                                        font.family: root.textFont
-                                        font.pixelSize: 12
-                                        font.bold: true
-                                    }
-                                }
-
-                                ScrollView {
-                                    id: providerScroll
-                                    contentHeight: providerList.implicitHeight
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    clip: true
-                                    contentWidth: availableWidth
-                                    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                    ScrollBar.vertical.policy: ScrollBar.AsNeeded
-
-                                    Column {
-                                        id: providerList
-                                        width: providerScroll.availableWidth
-                                        spacing: 10
-
-                                        Repeater {
-                                            model: providerViews
-
-                                            delegate: ProviderRow {
-                                                width: providerList.width
-                                                providerData: modelData
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
 
                     CardFrame {
@@ -2449,7 +2492,7 @@ ShellRoot {
                                 clip: true
                                 contentWidth: availableWidth
                                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                                ScrollBar.vertical.policy: ScrollBar.AsNeeded
+                                ScrollBar.vertical.policy: ScrollBar.AlwaysOff
 
                                 Item {
                                     width: historyScroll.availableWidth
