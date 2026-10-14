@@ -158,10 +158,13 @@ ShellRoot {
         // detail action rail card when present + fixed chrome (header, view
         // tabs, status row, heatmap card, display band, margins ≈ 620
         // relaxed / 540 compact, minus the rail card when narrow).
-        var overviewRows = providerGridRows() * (isCompact() ? 106 : 150)
+        // Only the overview view lays out the counted rows; the detail view
+        // hides that card, so charging its rows there bought a dead band at
+        // the card's bottom and starved the visible cards' scroll viewport.
+        var overviewRows = root.activeView === "overview" ? providerGridRows() * (isCompact() ? 106 : 150) : 0
         var railCard = isNarrow() ? 0 : (isCompact() ? 176 : 252)
         var chrome = (isCompact() ? 560 : 640) - railCard
-        var content = overviewRows + chrome
+        var content = overviewRows + chrome + (root.activeView === "detail" ? railCard : 0)
         var screenHeight = panelWindow.screen ? panelWindow.screen.height : 900
         var available = screenHeight - root.dropDownTopMargin - 12
         return Math.max(430, Math.min(root.dropDownMaxHeight, available, content))

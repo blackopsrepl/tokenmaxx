@@ -492,3 +492,21 @@ class ProviderRowWrapTest < Minitest::Test
       "the flat row count must not return")
   end
 end
+
+class ViewAwareHeightTest < Minitest::Test
+  def qml
+    @qml ||= File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+  end
+
+  # The counted rows belong to the overview; charging them in detail bought
+  # a dead band at the card bottom while Qt starved the visible cards. The
+  # rail card is the detail's own extra band and is charged only there.
+  def test_height_charges_each_view_for_what_it_lays_out
+    height_body = qml[/function cardHeight\(\) \{(.*?)\n    \}/m, 1]
+    refute_empty height_body
+    assert_match(/root\.activeView === "overview" \? providerGridRows\(\)/, height_body,
+      "row bands must be charged to the overview alone")
+    assert_match(/root\.activeView === "detail" \? railCard : 0/, height_body,
+      "the action-rail band must be charged to the detail view alone")
+  end
+end
