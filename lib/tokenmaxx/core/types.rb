@@ -48,13 +48,23 @@ module TokenMaxx
           source: "google-cloud-status",
           url: "https://status.cloud.google.com/incidents.json",
           sourceUrl: "https://status.cloud.google.com/",
-          products: ["Vertex Gemini API", "Gemini Code Assist"]
+          products: ["Vertex Gemini API", "Gemini Code Assist"],
+          # Other Gemini-branded products in the same feed; their incidents are
+          # other services, never Gemini coding health.
+          otherProductPattern: /\bGemini\b/
         },
         "opencode" => {
-          source: "opencode-go-usage",
-          url: nil,
-          sourceUrl: "https://opencode.ai/",
-          components: []
+          source: "opencode-status",
+          url: "https://status.opencode.ai/api/status",
+          sourceUrl: "https://status.opencode.ai/",
+          services: [
+            { id: "inference", name: "Inference API", aliases: ["inference"] },
+            { id: "go", name: "Go", aliases: ["go"] }
+          ],
+          componentNames: {
+            "inference" => "Inference API", "go" => "Go", "console" => "Console API",
+            "logs" => "Request logs", "payg" => "Pay-as-you-go", "free" => "Free inference"
+          }
         },
         "zai" => {
           source: "zai-quota",

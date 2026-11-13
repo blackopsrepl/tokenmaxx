@@ -1,0 +1,3199 @@
+{
+  "updatedAt": 1794582511342,
+  "since": 1792028534694,
+  "stale": false,
+  "status": "operational",
+  "components": [
+    {
+      "service": "console",
+      "status": "operational",
+      "reason": "none",
+      "since": 1794211768917,
+      "models": [],
+      "breakdown": [],
+      "speed": {}
+    },
+    {
+      "service": "logs",
+      "status": "operational",
+      "reason": "none",
+      "since": 1793909848537,
+      "models": [],
+      "breakdown": [],
+      "speed": {}
+    },
+    {
+      "service": "inference",
+      "status": "operational",
+      "reason": "none",
+      "since": 1794517949547,
+      "models": [],
+      "breakdown": [],
+      "speed": {}
+    },
+    {
+      "service": "go",
+      "status": "operational",
+      "reason": "none",
+      "since": 1794578191342,
+      "models": [],
+      "breakdown": [
+        {
+          "id": "deepseek-v4-pro",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2836,
+            "tps": 97
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 3027,
+            "tps": 136
+          }
+        },
+        {
+          "id": "glm-5.3-flash",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 1975,
+            "tps": 72
+          }
+        },
+        {
+          "id": "gpt-6-luna",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 3874,
+            "tps": 182
+          }
+        },
+        {
+          "id": "mimo-v2.6-flash",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 4539,
+            "tps": 38
+          }
+        },
+        {
+          "id": "muse-spark-1.3-contributor",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2795,
+            "tps": 274
+          }
+        }
+      ],
+      "speed": {
+        "ttft": 2997,
+        "tps": 134
+      }
+    },
+    {
+      "service": "payg",
+      "status": "operational",
+      "reason": "none",
+      "since": 1794579511342,
+      "models": [],
+      "breakdown": [
+        {
+          "id": "claude-haiku-5-5",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 917,
+            "tps": 247
+          }
+        },
+        {
+          "id": "claude-opus-5-5",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 1931,
+            "tps": 131
+          }
+        },
+        {
+          "id": "claude-sonnet-5-5",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 1386,
+            "tps": 170
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2107,
+            "tps": 180
+          }
+        },
+        {
+          "id": "glm-5.3-flash",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 3793,
+            "tps": 147
+          }
+        },
+        {
+          "id": "gpt-6-luna",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 3838,
+            "tps": 198
+          }
+        }
+      ],
+      "speed": {
+        "ttft": 2072,
+        "tps": 169
+      }
+    },
+    {
+      "service": "free",
+      "status": "operational",
+      "reason": "none",
+      "since": 1794562651342,
+      "models": [],
+      "breakdown": [
+        {
+          "id": "beam-free",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 875,
+            "tps": 174
+          }
+        },
+        {
+          "id": "big-pickle",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2189,
+            "tps": 141
+          }
+        },
+        {
+          "id": "deepseek-v4.1-flash-free",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2389,
+            "tps": 152
+          }
+        },
+        {
+          "id": "glm-5.3-flash-free",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2040,
+            "tps": 70
+          }
+        },
+        {
+          "id": "mimo-v2.6-flash-free",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 4246,
+            "tps": 38
+          }
+        },
+        {
+          "id": "minimax-m3.1-flash-free",
+          "status": "operational",
+          "reason": "none",
+          "speed": {
+            "ttft": 2774,
+            "tps": 241
+          }
+        }
+      ],
+      "speed": {
+        "ttft": 2267,
+        "tps": 135
+      }
+    }
+  ],
+  "incidents": [
+    {
+      "id": "free-1793405244861",
+      "event": "free-1793405244861",
+      "service": "free",
+      "startedAt": 1793405244861,
+      "resolvedAt": 1793406384886,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793424804960",
+      "event": "free-1793424804960",
+      "service": "free",
+      "startedAt": 1793424804960,
+      "resolvedAt": 1793427084960,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793426184960",
+      "event": "payg-1793426184960",
+      "service": "payg",
+      "startedAt": 1793426184960,
+      "resolvedAt": 1793426604960,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793428225011",
+      "event": "payg-1793428225011",
+      "service": "payg",
+      "startedAt": 1793428225011,
+      "resolvedAt": 1793428465011,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "console-1793453425054",
+      "event": "console-1793453425054",
+      "service": "console",
+      "startedAt": 1793453425054,
+      "resolvedAt": 1793453605054,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "go-1793459485079",
+      "event": "go-1793459485079",
+      "service": "go",
+      "startedAt": 1793459485079,
+      "resolvedAt": 1793459725079,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793459485079",
+      "event": "go-1793459485079",
+      "service": "free",
+      "startedAt": 1793459485079,
+      "resolvedAt": 1793459725079,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "console-1793483125265",
+      "event": "console-1793483125265",
+      "service": "console",
+      "startedAt": 1793483125265,
+      "resolvedAt": 1793483425265,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "go-1793538445265",
+      "event": "go-1793538445265",
+      "service": "go",
+      "startedAt": 1793538445265,
+      "resolvedAt": 1793538505265,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793538565265",
+      "event": "go-1793538445265",
+      "service": "free",
+      "startedAt": 1793538565265,
+      "resolvedAt": 1793538865265,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793545105299",
+      "event": "free-1793545105299",
+      "service": "free",
+      "startedAt": 1793545105299,
+      "resolvedAt": 1793545225299,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793576546431",
+      "event": "go-1793576546431",
+      "service": "go",
+      "startedAt": 1793576546431,
+      "resolvedAt": 1793576666431,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793577746431",
+      "event": "go-1793577746431",
+      "service": "go",
+      "startedAt": 1793577746431,
+      "resolvedAt": 1793577986431,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793581166431",
+      "event": "free-1793581166431",
+      "service": "free",
+      "startedAt": 1793581166431,
+      "resolvedAt": 1793581466431,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "glm-5.3-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793585006431",
+      "event": "free-1793585006431",
+      "service": "free",
+      "startedAt": 1793585006431,
+      "resolvedAt": 1793587766431,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793585546431",
+      "event": "free-1793585006431",
+      "service": "go",
+      "startedAt": 1793585546431,
+      "resolvedAt": 1793587046431,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793589146431",
+      "event": "free-1793589146431",
+      "service": "free",
+      "startedAt": 1793589146431,
+      "resolvedAt": 1793589386431,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793589266431",
+      "event": "free-1793589146431",
+      "service": "go",
+      "startedAt": 1793589266431,
+      "resolvedAt": 1793589326431,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793608646470",
+      "event": "go-1793608646470",
+      "service": "go",
+      "startedAt": 1793608646470,
+      "resolvedAt": 1793608706470,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793609906470",
+      "event": "free-1793609906470",
+      "service": "free",
+      "startedAt": 1793609906470,
+      "resolvedAt": 1793610746470,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "big-pickle",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793628926566",
+      "event": "go-1793628926566",
+      "service": "free",
+      "startedAt": 1793628926566,
+      "resolvedAt": 1793629166566,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793628926566",
+      "event": "go-1793628926566",
+      "service": "go",
+      "startedAt": 1793628926566,
+      "resolvedAt": 1793629226566,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793628926566",
+      "event": "go-1793628926566",
+      "service": "payg",
+      "startedAt": 1793628926566,
+      "resolvedAt": 1793629226566,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "console-1793646986681",
+      "event": "console-1793646986681",
+      "service": "console",
+      "startedAt": 1793646986681,
+      "resolvedAt": 1793647286681,
+      "status": "degraded",
+      "reason": "latency",
+      "models": []
+    },
+    {
+      "id": "go-1793664146685",
+      "event": "go-1793664146685",
+      "service": "go",
+      "startedAt": 1793664146685,
+      "resolvedAt": 1793664386685,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793686526689",
+      "event": "free-1793686526689",
+      "service": "free",
+      "startedAt": 1793686526689,
+      "resolvedAt": 1793686706689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793687786689",
+      "event": "free-1793687786689",
+      "service": "free",
+      "startedAt": 1793687786689,
+      "resolvedAt": 1793688146689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793689166689",
+      "event": "free-1793689166689",
+      "service": "free",
+      "startedAt": 1793689166689,
+      "resolvedAt": 1793692226689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793689346689",
+      "event": "free-1793689166689",
+      "service": "go",
+      "startedAt": 1793689346689,
+      "resolvedAt": 1793691866689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793696066689",
+      "event": "free-1793696066689",
+      "service": "free",
+      "startedAt": 1793696066689,
+      "resolvedAt": 1793700506689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793696666689",
+      "event": "free-1793696066689",
+      "service": "go",
+      "startedAt": 1793696666689,
+      "resolvedAt": 1793700446689,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793706686689",
+      "event": "free-1793706686689",
+      "service": "free",
+      "startedAt": 1793706686689,
+      "resolvedAt": 1793707046689,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793711066690",
+      "event": "free-1793711066690",
+      "service": "free",
+      "startedAt": 1793711066690,
+      "resolvedAt": 1793711126690,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793714126690",
+      "event": "payg-1793714126690",
+      "service": "payg",
+      "startedAt": 1793714126690,
+      "resolvedAt": 1793714186690,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793714786690",
+      "event": "payg-1793714126690",
+      "service": "free",
+      "startedAt": 1793714786690,
+      "resolvedAt": 1793715446690,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793715146690",
+      "event": "go-1793715146690",
+      "service": "go",
+      "startedAt": 1793715146690,
+      "resolvedAt": 1793715386690,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793720246690",
+      "event": "payg-1793720246690",
+      "service": "payg",
+      "startedAt": 1793720246690,
+      "resolvedAt": 1793720306690,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793732126693",
+      "event": "go-1793732126693",
+      "service": "go",
+      "startedAt": 1793732126693,
+      "resolvedAt": 1793732366693,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793733926693",
+      "event": "payg-1793733926693",
+      "service": "payg",
+      "startedAt": 1793733926693,
+      "resolvedAt": 1793735066693,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793737046693",
+      "event": "go-1793737046693",
+      "service": "go",
+      "startedAt": 1793737046693,
+      "resolvedAt": 1793737226693,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793737706693",
+      "event": "go-1793737046693",
+      "service": "payg",
+      "startedAt": 1793737706693,
+      "resolvedAt": 1793737826693,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793737706693",
+      "event": "free-1793737706693",
+      "service": "free",
+      "startedAt": 1793737706693,
+      "resolvedAt": 1793740946693,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793757446696",
+      "event": "go-1793757446696",
+      "service": "go",
+      "startedAt": 1793757446696,
+      "resolvedAt": 1793761106696,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793757806696",
+      "event": "go-1793757446696",
+      "service": "free",
+      "startedAt": 1793757806696,
+      "resolvedAt": 1793761106696,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793768306697",
+      "event": "free-1793768306697",
+      "service": "free",
+      "startedAt": 1793768306697,
+      "resolvedAt": 1793770706697,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "glm-5.3-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793773946697",
+      "event": "free-1793773946697",
+      "service": "free",
+      "startedAt": 1793773946697,
+      "resolvedAt": 1793782286697,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793779406697",
+      "event": "go-1793779406697",
+      "service": "go",
+      "startedAt": 1793779406697,
+      "resolvedAt": 1793779586697,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793780786697",
+      "event": "go-1793780786697",
+      "service": "go",
+      "startedAt": 1793780786697,
+      "resolvedAt": 1793781086697,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793782106697",
+      "event": "go-1793782106697",
+      "service": "go",
+      "startedAt": 1793782106697,
+      "resolvedAt": 1793782166697,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793804426698",
+      "event": "payg-1793804426698",
+      "service": "payg",
+      "startedAt": 1793804426698,
+      "resolvedAt": 1793804486698,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793806886705",
+      "event": "go-1793806886705",
+      "service": "go",
+      "startedAt": 1793806886705,
+      "resolvedAt": 1793807126705,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793807006705",
+      "event": "go-1793806886705",
+      "service": "payg",
+      "startedAt": 1793807006705,
+      "resolvedAt": 1793807066705,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793815166713",
+      "event": "go-1793815166713",
+      "service": "go",
+      "startedAt": 1793815166713,
+      "resolvedAt": 1793815286713,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793830466718",
+      "event": "go-1793830466718",
+      "service": "go",
+      "startedAt": 1793830466718,
+      "resolvedAt": 1793831246718,
+      "status": "degraded",
+      "reason": "errors",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "errors"
+        }
+      ]
+    },
+    {
+      "id": "inference-1793830586718",
+      "event": "go-1793830466718",
+      "service": "inference",
+      "startedAt": 1793830586718,
+      "resolvedAt": 1793830706718,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "payg-1793830586718",
+      "event": "go-1793830466718",
+      "service": "payg",
+      "startedAt": 1793830586718,
+      "resolvedAt": 1793830706718,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "free-1793830586718",
+      "event": "go-1793830466718",
+      "service": "free",
+      "startedAt": 1793830586718,
+      "resolvedAt": 1793830706718,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "go-1793835026718",
+      "event": "go-1793835026718",
+      "service": "go",
+      "startedAt": 1793835026718,
+      "resolvedAt": 1793835806718,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793848048523",
+      "event": "go-1793848048523",
+      "service": "go",
+      "startedAt": 1793848048523,
+      "resolvedAt": 1793848228523,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793862928523",
+      "event": "free-1793862928523",
+      "service": "free",
+      "startedAt": 1793862928523,
+      "resolvedAt": 1793862988523,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793862988523",
+      "event": "free-1793862928523",
+      "service": "go",
+      "startedAt": 1793862988523,
+      "resolvedAt": 1793863048523,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793883628525",
+      "event": "go-1793883628525",
+      "service": "go",
+      "startedAt": 1793883628525,
+      "resolvedAt": 1793884468525,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793883628525",
+      "event": "go-1793883628525",
+      "service": "free",
+      "startedAt": 1793883628525,
+      "resolvedAt": 1793884468525,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793894848528",
+      "event": "go-1793894848528",
+      "service": "go",
+      "startedAt": 1793894848528,
+      "resolvedAt": 1793895088528,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "claude-haiku-5-5",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "console-1793895568528",
+      "event": "console-1793895568528",
+      "service": "console",
+      "startedAt": 1793895568528,
+      "resolvedAt": 1793895748528,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "go-1793897368528",
+      "event": "go-1793897368528",
+      "service": "go",
+      "startedAt": 1793897368528,
+      "resolvedAt": 1793897428528,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793902708532",
+      "event": "go-1793902708532",
+      "service": "go",
+      "startedAt": 1793902708532,
+      "resolvedAt": 1793903128532,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793905948534",
+      "event": "go-1793905948534",
+      "service": "go",
+      "startedAt": 1793905948534,
+      "resolvedAt": 1793907148535,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793909308537",
+      "event": "go-1793909308537",
+      "service": "go",
+      "startedAt": 1793909308537,
+      "resolvedAt": 1793910508537,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "logs-1793909788537",
+      "event": "logs-1793909788537",
+      "service": "logs",
+      "startedAt": 1793909788537,
+      "resolvedAt": 1793909848537,
+      "status": "degraded",
+      "reason": "availability",
+      "models": []
+    },
+    {
+      "id": "go-1793912788546",
+      "event": "go-1793912788546",
+      "service": "go",
+      "startedAt": 1793912788546,
+      "resolvedAt": 1793920948549,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1793930608549",
+      "event": "go-1793930608549",
+      "service": "go",
+      "startedAt": 1793930608549,
+      "resolvedAt": 1793938348549,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793934088549",
+      "event": "free-1793934088549",
+      "service": "free",
+      "startedAt": 1793934088549,
+      "resolvedAt": 1793936728549,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1793942488549",
+      "event": "payg-1793942488549",
+      "service": "payg",
+      "startedAt": 1793942488549,
+      "resolvedAt": 1793942608549,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1793943088549",
+      "event": "go-1793943088549",
+      "service": "go",
+      "startedAt": 1793943088549,
+      "resolvedAt": 1793958268549,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793946148549",
+      "event": "free-1793946148549",
+      "service": "free",
+      "startedAt": 1793946148549,
+      "resolvedAt": 1793958508549,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "big-pickle",
+          "reason": "upstream"
+        },
+        {
+          "id": "deepseek-v4.1-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793959648549",
+      "event": "free-1793959648549",
+      "service": "free",
+      "startedAt": 1793959648549,
+      "resolvedAt": 1793960188549,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1793973448549",
+      "event": "free-1793973448549",
+      "service": "free",
+      "startedAt": 1793973448549,
+      "resolvedAt": 1793975848549,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793977948549",
+      "event": "free-1793977948549",
+      "service": "free",
+      "startedAt": 1793977948549,
+      "resolvedAt": 1793978248549,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793979688549",
+      "event": "free-1793979688549",
+      "service": "free",
+      "startedAt": 1793979688549,
+      "resolvedAt": 1793980108549,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793987728550",
+      "event": "free-1793987728550",
+      "service": "free",
+      "startedAt": 1793987728550,
+      "resolvedAt": 1793990488550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793991448550",
+      "event": "free-1793991448550",
+      "service": "free",
+      "startedAt": 1793991448550,
+      "resolvedAt": 1793991688550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1793993068550",
+      "event": "free-1793993068550",
+      "service": "free",
+      "startedAt": 1793993068550,
+      "resolvedAt": 1793993308550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "console-1793994808550",
+      "event": "console-1793994808550",
+      "service": "console",
+      "startedAt": 1793994808550,
+      "resolvedAt": 1793994868550,
+      "status": "degraded",
+      "reason": "availability",
+      "models": []
+    },
+    {
+      "id": "payg-1794008968550",
+      "event": "payg-1794008968550",
+      "service": "payg",
+      "startedAt": 1794008968550,
+      "resolvedAt": 1794010228550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794013468550",
+      "event": "go-1794013468550",
+      "service": "go",
+      "startedAt": 1794013468550,
+      "resolvedAt": 1794014788550,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794017368550",
+      "event": "go-1794017368550",
+      "service": "go",
+      "startedAt": 1794017368550,
+      "resolvedAt": 1794033928550,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794038128550",
+      "event": "payg-1794038128550",
+      "service": "payg",
+      "startedAt": 1794038128550,
+      "resolvedAt": 1794038368550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794038668550",
+      "event": "go-1794038668550",
+      "service": "go",
+      "startedAt": 1794038668550,
+      "resolvedAt": 1794039148550,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794040288550",
+      "event": "go-1794040288550",
+      "service": "go",
+      "startedAt": 1794040288550,
+      "resolvedAt": 1794041428550,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794040648550",
+      "event": "go-1794040288550",
+      "service": "free",
+      "startedAt": 1794040648550,
+      "resolvedAt": 1794078148550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "big-pickle",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794042748550",
+      "event": "go-1794042748550",
+      "service": "go",
+      "startedAt": 1794042748550,
+      "resolvedAt": 1794056788550,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794075508550",
+      "event": "go-1794075508550",
+      "service": "go",
+      "startedAt": 1794075508550,
+      "resolvedAt": 1794077788550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794079108550",
+      "event": "free-1794079108550",
+      "service": "free",
+      "startedAt": 1794079108550,
+      "resolvedAt": 1794079288550,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794086188550",
+      "event": "free-1794086188550",
+      "service": "free",
+      "startedAt": 1794086188550,
+      "resolvedAt": 1794098248586,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794104128587",
+      "event": "free-1794104128587",
+      "service": "free",
+      "startedAt": 1794104128587,
+      "resolvedAt": 1794104248587,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794109708587",
+      "event": "free-1794109708587",
+      "service": "free",
+      "startedAt": 1794109708587,
+      "resolvedAt": 1794112408587,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794129208587",
+      "event": "payg-1794129208587",
+      "service": "payg",
+      "startedAt": 1794129208587,
+      "resolvedAt": 1794130168587,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        },
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794132208587",
+      "event": "payg-1794132208587",
+      "service": "payg",
+      "startedAt": 1794132208587,
+      "resolvedAt": 1794132808587,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        },
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794153508695",
+      "event": "free-1794153508695",
+      "service": "free",
+      "startedAt": 1794153508695,
+      "resolvedAt": 1794156088695,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794157468695",
+      "event": "free-1794157468695",
+      "service": "free",
+      "startedAt": 1794157468695,
+      "resolvedAt": 1794158428695,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794159448695",
+      "event": "free-1794159448695",
+      "service": "free",
+      "startedAt": 1794159448695,
+      "resolvedAt": 1794160108695,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794161068695",
+      "event": "free-1794161068695",
+      "service": "free",
+      "startedAt": 1794161068695,
+      "resolvedAt": 1794164128695,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794172348743",
+      "event": "free-1794172348743",
+      "service": "free",
+      "startedAt": 1794172348743,
+      "resolvedAt": 1794174748743,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794179128743",
+      "event": "free-1794179128743",
+      "service": "free",
+      "startedAt": 1794179128743,
+      "resolvedAt": 1794180568743,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794190828743",
+      "event": "free-1794190828743",
+      "service": "free",
+      "startedAt": 1794190828743,
+      "resolvedAt": 1794190948743,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794191308743",
+      "event": "payg-1794191308743",
+      "service": "payg",
+      "startedAt": 1794191308743,
+      "resolvedAt": 1794204808874,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794212548917",
+      "event": "free-1794212548917",
+      "service": "free",
+      "startedAt": 1794212548917,
+      "resolvedAt": 1794213268917,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794214348917",
+      "event": "go-1794214348917",
+      "service": "go",
+      "startedAt": 1794214348917,
+      "resolvedAt": 1794214468917,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794214948917",
+      "event": "payg-1794214948917",
+      "service": "payg",
+      "startedAt": 1794214948917,
+      "resolvedAt": 1794215248917,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794216328917",
+      "event": "payg-1794216328917",
+      "service": "payg",
+      "startedAt": 1794216328917,
+      "resolvedAt": 1794216388917,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794223888917",
+      "event": "payg-1794223888917",
+      "service": "payg",
+      "startedAt": 1794223888917,
+      "resolvedAt": 1794224128917,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794236248961",
+      "event": "free-1794236248961",
+      "service": "free",
+      "startedAt": 1794236248961,
+      "resolvedAt": 1794236968997,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794237028997",
+      "event": "go-1794237028997",
+      "service": "go",
+      "startedAt": 1794237028997,
+      "resolvedAt": 1794237208997,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794237088997",
+      "event": "go-1794237028997",
+      "service": "payg",
+      "startedAt": 1794237088997,
+      "resolvedAt": 1794237208997,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794240209106",
+      "event": "go-1794240209106",
+      "service": "go",
+      "startedAt": 1794240209106,
+      "resolvedAt": 1794240329119,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794241949119",
+      "event": "free-1794241949119",
+      "service": "free",
+      "startedAt": 1794241949119,
+      "resolvedAt": 1794242189119,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794244229119",
+      "event": "free-1794244229119",
+      "service": "free",
+      "startedAt": 1794244229119,
+      "resolvedAt": 1794245189119,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794247649119",
+      "event": "free-1794247649119",
+      "service": "free",
+      "startedAt": 1794247649119,
+      "resolvedAt": 1794248009119,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794253109123",
+      "event": "free-1794253109123",
+      "service": "free",
+      "startedAt": 1794253109123,
+      "resolvedAt": 1794253469123,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794254249123",
+      "event": "payg-1794254249123",
+      "service": "payg",
+      "startedAt": 1794254249123,
+      "resolvedAt": 1794254549123,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794255389123",
+      "event": "free-1794255389123",
+      "service": "free",
+      "startedAt": 1794255389123,
+      "resolvedAt": 1794256589123,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794257669123",
+      "event": "free-1794257669123",
+      "service": "free",
+      "startedAt": 1794257669123,
+      "resolvedAt": 1794258449123,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794260369123",
+      "event": "free-1794260369123",
+      "service": "free",
+      "startedAt": 1794260369123,
+      "resolvedAt": 1794261509452,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "crouton-alpha-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794267389452",
+      "event": "free-1794267389452",
+      "service": "free",
+      "startedAt": 1794267389452,
+      "resolvedAt": 1794267509452,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794274229455",
+      "event": "free-1794274229455",
+      "service": "free",
+      "startedAt": 1794274229455,
+      "resolvedAt": 1794274529455,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794280109455",
+      "event": "free-1794280109455",
+      "service": "free",
+      "startedAt": 1794280109455,
+      "resolvedAt": 1794280649455,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794292409457",
+      "event": "payg-1794292409457",
+      "service": "payg",
+      "startedAt": 1794292409457,
+      "resolvedAt": 1794335849457,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794292889457",
+      "event": "go-1794292889457",
+      "service": "go",
+      "startedAt": 1794292889457,
+      "resolvedAt": 1794335849457,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794324389457",
+      "event": "free-1794324389457",
+      "service": "free",
+      "startedAt": 1794324389457,
+      "resolvedAt": 1794324629457,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794326489457",
+      "event": "free-1794326489457",
+      "service": "free",
+      "startedAt": 1794326489457,
+      "resolvedAt": 1794330809457,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794348509457",
+      "event": "go-1794348509457",
+      "service": "go",
+      "startedAt": 1794348509457,
+      "resolvedAt": 1794352109457,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794350009457",
+      "event": "free-1794350009457",
+      "service": "free",
+      "startedAt": 1794350009457,
+      "resolvedAt": 1794352469457,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794353789458",
+      "event": "free-1794353789458",
+      "service": "free",
+      "startedAt": 1794353789458,
+      "resolvedAt": 1794365189462,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794353849458",
+      "event": "free-1794353789458",
+      "service": "go",
+      "startedAt": 1794353849458,
+      "resolvedAt": 1794364649462,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794357989462",
+      "event": "payg-1794357989462",
+      "service": "payg",
+      "startedAt": 1794357989462,
+      "resolvedAt": 1794358769462,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794366929464",
+      "event": "free-1794366929464",
+      "service": "free",
+      "startedAt": 1794366929464,
+      "resolvedAt": 1794367289464,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794368369465",
+      "event": "payg-1794368369465",
+      "service": "payg",
+      "startedAt": 1794368369465,
+      "resolvedAt": 1794370349465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794374129465",
+      "event": "go-1794374129465",
+      "service": "go",
+      "startedAt": 1794374129465,
+      "resolvedAt": 1794374789465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794375629465",
+      "event": "payg-1794375629465",
+      "service": "payg",
+      "startedAt": 1794375629465,
+      "resolvedAt": 1794375989465,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "claude-opus-5-5",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794378389465",
+      "event": "free-1794378389465",
+      "service": "free",
+      "startedAt": 1794378389465,
+      "resolvedAt": 1794381989465,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "big-pickle",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794382289465",
+      "event": "payg-1794382289465",
+      "service": "payg",
+      "startedAt": 1794382289465,
+      "resolvedAt": 1794382469465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794386369465",
+      "event": "go-1794386369465",
+      "service": "go",
+      "startedAt": 1794386369465,
+      "resolvedAt": 1794386429465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4-pro",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794388169465",
+      "event": "payg-1794388169465",
+      "service": "payg",
+      "startedAt": 1794388169465,
+      "resolvedAt": 1794388229465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794390389465",
+      "event": "payg-1794390389465",
+      "service": "payg",
+      "startedAt": 1794390389465,
+      "resolvedAt": 1794390509465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794392729465",
+      "event": "free-1794392729465",
+      "service": "free",
+      "startedAt": 1794392729465,
+      "resolvedAt": 1794392789465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794396029465",
+      "event": "go-1794396029465",
+      "service": "go",
+      "startedAt": 1794396029465,
+      "resolvedAt": 1794396329465,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794396329465",
+      "event": "payg-1794396329465",
+      "service": "payg",
+      "startedAt": 1794396329465,
+      "resolvedAt": 1794396389465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794398249465",
+      "event": "payg-1794398249465",
+      "service": "payg",
+      "startedAt": 1794398249465,
+      "resolvedAt": 1794398369465,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794399329465",
+      "event": "go-1794399329465",
+      "service": "payg",
+      "startedAt": 1794399329465,
+      "resolvedAt": 1794400409465,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794399329465",
+      "event": "go-1794399329465",
+      "service": "go",
+      "startedAt": 1794399329465,
+      "resolvedAt": 1794400469465,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794401129504",
+      "event": "free-1794401129504",
+      "service": "free",
+      "startedAt": 1794401129504,
+      "resolvedAt": 1794401369504,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794402329504",
+      "event": "free-1794402329504",
+      "service": "free",
+      "startedAt": 1794402329504,
+      "resolvedAt": 1794404129504,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794404069504",
+      "event": "go-1794404069504",
+      "service": "payg",
+      "startedAt": 1794404069504,
+      "resolvedAt": 1794408149504,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794404069504",
+      "event": "go-1794404069504",
+      "service": "go",
+      "startedAt": 1794404069504,
+      "resolvedAt": 1794409169504,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "free-1794405749504",
+      "event": "free-1794405749504",
+      "service": "free",
+      "startedAt": 1794405749504,
+      "resolvedAt": 1794439469541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794410369504",
+      "event": "go-1794410369504",
+      "service": "payg",
+      "startedAt": 1794410369504,
+      "resolvedAt": 1794410669520,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794410369504",
+      "event": "go-1794410369504",
+      "service": "go",
+      "startedAt": 1794410369504,
+      "resolvedAt": 1794410849520,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794412229520",
+      "event": "go-1794412229520",
+      "service": "go",
+      "startedAt": 1794412229520,
+      "resolvedAt": 1794415649530,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794412229520",
+      "event": "go-1794412229520",
+      "service": "payg",
+      "startedAt": 1794412229520,
+      "resolvedAt": 1794415649530,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794416909530",
+      "event": "go-1794416909530",
+      "service": "go",
+      "startedAt": 1794416909530,
+      "resolvedAt": 1794417989530,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794417689530",
+      "event": "go-1794416909530",
+      "service": "payg",
+      "startedAt": 1794417689530,
+      "resolvedAt": 1794417989530,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794419849535",
+      "event": "go-1794419849535",
+      "service": "go",
+      "startedAt": 1794419849535,
+      "resolvedAt": 1794421409535,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794419969535",
+      "event": "go-1794419849535",
+      "service": "payg",
+      "startedAt": 1794419969535,
+      "resolvedAt": 1794421409535,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794422909540",
+      "event": "payg-1794422909540",
+      "service": "payg",
+      "startedAt": 1794422909540,
+      "resolvedAt": 1794425069540,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794422969540",
+      "event": "payg-1794422909540",
+      "service": "go",
+      "startedAt": 1794422969540,
+      "resolvedAt": 1794424649540,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794438689541",
+      "event": "payg-1794438689541",
+      "service": "payg",
+      "startedAt": 1794438689541,
+      "resolvedAt": 1794439649541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "deepseek-v4.1-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794441809541",
+      "event": "go-1794441809541",
+      "service": "go",
+      "startedAt": 1794441809541,
+      "resolvedAt": 1794441989541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794443009541",
+      "event": "go-1794443009541",
+      "service": "go",
+      "startedAt": 1794443009541,
+      "resolvedAt": 1794444329541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794444989541",
+      "event": "free-1794444989541",
+      "service": "free",
+      "startedAt": 1794444989541,
+      "resolvedAt": 1794446249541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "nemotron-3.5-super-vl-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794446729541",
+      "event": "payg-1794446729541",
+      "service": "payg",
+      "startedAt": 1794446729541,
+      "resolvedAt": 1794447269541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794450449541",
+      "event": "payg-1794450449541",
+      "service": "payg",
+      "startedAt": 1794450449541,
+      "resolvedAt": 1794452789541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "glm-5.3-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794452489541",
+      "event": "free-1794452489541",
+      "service": "free",
+      "startedAt": 1794452489541,
+      "resolvedAt": 1794452729541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794452549541",
+      "event": "free-1794452489541",
+      "service": "go",
+      "startedAt": 1794452549541,
+      "resolvedAt": 1794452729541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794471569541",
+      "event": "free-1794471569541",
+      "service": "free",
+      "startedAt": 1794471569541,
+      "resolvedAt": 1794471749541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794471629541",
+      "event": "free-1794471569541",
+      "service": "go",
+      "startedAt": 1794471629541,
+      "resolvedAt": 1794471689541,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794484349541",
+      "event": "go-1794484349541",
+      "service": "go",
+      "startedAt": 1794484349541,
+      "resolvedAt": 1794498569541,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794484409541",
+      "event": "go-1794484349541",
+      "service": "payg",
+      "startedAt": 1794484409541,
+      "resolvedAt": 1794486089541,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794487169541",
+      "event": "payg-1794487169541",
+      "service": "payg",
+      "startedAt": 1794487169541,
+      "resolvedAt": 1794487349541,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794489389541",
+      "event": "payg-1794489389541",
+      "service": "payg",
+      "startedAt": 1794489389541,
+      "resolvedAt": 1794498569541,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794500609543",
+      "event": "go-1794500609543",
+      "service": "go",
+      "startedAt": 1794500609543,
+      "resolvedAt": 1794502769543,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794500669543",
+      "event": "go-1794500609543",
+      "service": "payg",
+      "startedAt": 1794500669543,
+      "resolvedAt": 1794502769543,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794506069543",
+      "event": "go-1794506069543",
+      "service": "go",
+      "startedAt": 1794506069543,
+      "resolvedAt": 1794511469546,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794506069543",
+      "event": "go-1794506069543",
+      "service": "payg",
+      "startedAt": 1794506069543,
+      "resolvedAt": 1794515789547,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794513029547",
+      "event": "go-1794513029547",
+      "service": "go",
+      "startedAt": 1794513029547,
+      "resolvedAt": 1794515789547,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "gpt-6-luna",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794517169547",
+      "event": "payg-1794517169547",
+      "service": "payg",
+      "startedAt": 1794517169547,
+      "resolvedAt": 1794517949547,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "inference-1794517889547",
+      "event": "inference-1794517889547",
+      "service": "inference",
+      "startedAt": 1794517889547,
+      "resolvedAt": 1794517949547,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "free-1794517889547",
+      "event": "payg-1794517169547",
+      "service": "free",
+      "startedAt": 1794517889547,
+      "resolvedAt": 1794517949547,
+      "status": "degraded",
+      "reason": "errors",
+      "models": []
+    },
+    {
+      "id": "go-1794517889547",
+      "event": "inference-1794517889547",
+      "service": "go",
+      "startedAt": 1794517889547,
+      "resolvedAt": 1794551371342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "muse-spark-1.3-contributor",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794551611342",
+      "event": "free-1794551611342",
+      "service": "free",
+      "startedAt": 1794551611342,
+      "resolvedAt": 1794552031342,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "beam-free",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "go-1794557011342",
+      "event": "go-1794557011342",
+      "service": "go",
+      "startedAt": 1794557011342,
+      "resolvedAt": 1794557191342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794557071342",
+      "event": "go-1794557011342",
+      "service": "free",
+      "startedAt": 1794557071342,
+      "resolvedAt": 1794557131342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794560011342",
+      "event": "go-1794560011342",
+      "service": "go",
+      "startedAt": 1794560011342,
+      "resolvedAt": 1794560311342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794560011342",
+      "event": "go-1794560011342",
+      "service": "free",
+      "startedAt": 1794560011342,
+      "resolvedAt": 1794560311342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794562411342",
+      "event": "go-1794562411342",
+      "service": "go",
+      "startedAt": 1794562411342,
+      "resolvedAt": 1794562651342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "free-1794562531342",
+      "event": "go-1794562411342",
+      "service": "free",
+      "startedAt": 1794562531342,
+      "resolvedAt": 1794562651342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash-free",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794565111342",
+      "event": "payg-1794565111342",
+      "service": "payg",
+      "startedAt": 1794565111342,
+      "resolvedAt": 1794565651342,
+      "status": "degraded",
+      "reason": "upstream",
+      "models": [
+        {
+          "id": "claude-haiku-5-5",
+          "reason": "upstream"
+        },
+        {
+          "id": "claude-opus-5-5",
+          "reason": "upstream"
+        },
+        {
+          "id": "claude-sonnet-5-5",
+          "reason": "upstream"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794574951342",
+      "event": "payg-1794574951342",
+      "service": "payg",
+      "startedAt": 1794574951342,
+      "resolvedAt": 1794576871342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "claude-sonnet-5-5",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "go-1794578071342",
+      "event": "go-1794578071342",
+      "service": "go",
+      "startedAt": 1794578071342,
+      "resolvedAt": 1794578191342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "mimo-v2.6-flash",
+          "reason": "latency"
+        }
+      ]
+    },
+    {
+      "id": "payg-1794578851342",
+      "event": "payg-1794578851342",
+      "service": "payg",
+      "startedAt": 1794578851342,
+      "resolvedAt": 1794579511342,
+      "status": "degraded",
+      "reason": "latency",
+      "models": [
+        {
+          "id": "claude-sonnet-5-5",
+          "reason": "latency"
+        }
+      ]
+    }
+  ],
+  "notes": []
+}

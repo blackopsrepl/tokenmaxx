@@ -56,6 +56,7 @@ module TokenMaxx
         when "codex" then OpenAI.fetch(metadata, previous: previous, now: now)
         when "claude" then Claude.fetch(metadata, previous: previous, now: now)
         when "gemini" then fetch_google_status(metadata, previous: previous, now: now)
+        when "opencode" then Opencode.fetch(metadata, previous: previous, now: now)
         else fetch_account_status(provider, metadata, previous: previous, now: now)
         end.merge(provider: provider)
       end
@@ -314,39 +315,34 @@ module TokenMaxx
             # compatible fixtures may carry status directly on the incident.
             item.merge(status: item.dig(:most_recent_update, :status) || item[:status] || item[:status_impact])
           end.select { |i| !i[:end] && i[:status] != "AVAILABLE" }
+          # The feed lists every incident Google publishes for each product, so a
+          # tracked product without an active incident is available, as on
+          # status.cloud.google.com itself.
           services = metadata[:products].map do |product|
             matching = active.select { |i| i[:affected_products].any? { |p| p[:title] == product } }
-            state = matching.empty? ? "unknown" : aggregate(matching.map { |i| { state: GOOGLE_STATES.fetch(i[:status].to_s, "unknown") } })
+            state = matching.empty? ? "ok" : aggregate(matching.map { |i| { state: GOOGLE_STATES.fetch(i[:status].to_s, "unknown") } })
             { id: product, name: product, state: state, rawStatus: matching.map { |i| i[:status] }.join(","), scope: "coding", sourceScope: "Google Cloud product advisory; not Gemini CLI account or end-to-end inference", checkedAt: now.iso8601 }
           end
           incidents = active.filter_map do |item|
             ids = item[:affected_products].map { |p| p[:title] }.compact
-            next if (ids & metadata[:products]).empty?
+            next if (ids & metadata[:products]).empty? && ids.none? { |title| title.match?(metadata[:otherProductPattern]) }
             id = item[:id] || item[:number] || Digest::SHA256.hexdigest([item[:begin], item[:external_desc], ids.sort].join("|"))
             normalized = normalize_incident(item.merge(id: id.to_s, name: item[:external_desc], status: item[:status], url: item[:uri]),
               metadata.merge(services: metadata[:products].map { |p| { id: p, name: p } }), catalog: ids.map { |p| { id: p, name: p } }, ids: ids,
               update: { body: item.dig(:most_recent_update, :text), updated_at: item[:modified] }, now: now)
+            normalized = normalized.merge(currentImpacts: ids.reject { |title| metadata[:products].include?(title) }
+                                                              .map { |title| { id: title, state: GOOGLE_STATES.fetch(item[:status].to_s, "unknown") } }) if normalized[:scope] == "other"
             normalized.merge(sourceScope: "Google Cloud product advisory")
           end
-          { services: services, incidents: incidents, coverage: "partial" }
+          { services: services, incidents: incidents, coverage: "complete" }
         end
-        result = assemble(metadata.merge(services: metadata[:products].map { |p| { id: p, name: p, aliases: [p] } }), health: source, enrichment: source, now: now)
-        result[:coverage] = "partial" if source[:lastSuccessAt]
-        result[:description] = if source[:lastSuccessAt] && result[:incidents].empty?
-                                 "No active advisories for tracked Google Cloud products; coding health not reported (not Gemini CLI account health)"
-                               else
-                                 "Google Cloud product advisories: #{result[:description]} (not Gemini CLI account health)"
-                               end
-        result
+        assemble(metadata.merge(services: metadata[:products].map { |p| { id: p, name: p, aliases: [p] } }), health: source, enrichment: source, now: now)
       end
 
       def valid_account_payload?(provider, payload)
         return false unless payload.is_a?(Hash)
 
         case provider
-        when "opencode"
-          windows = payload[:usage]
-          windows.is_a?(Hash) && %i[rolling weekly monthly].any? { |key| windows[key].is_a?(Hash) && windows[key][:percent].is_a?(Numeric) }
         when "zai"
           payload[:data].is_a?(Hash) && Array(payload[:data][:limits]).any? do |limit|
             limit.is_a?(Hash) && Providers::Zai::QUOTA_WINDOW_TYPES.include?(limit[:type]) &&
@@ -361,12 +357,8 @@ module TokenMaxx
       end
 
       def fetch_account_status(provider, metadata, previous:, now:)
-        implementation = { "opencode" => Providers::Opencode, "zai" => Providers::Zai, "ollama" => Providers::Ollama }.fetch(provider)
-        url = case provider
-              when "opencode" then implementation::USAGE_URL
-              when "zai" then implementation::QUOTA_URL
-              else implementation::BALANCE_URL
-              end
+        implementation = { "zai" => Providers::Zai, "ollama" => Providers::Ollama }.fetch(provider)
+        url = provider == "zai" ? implementation::QUOTA_URL : implementation::BALANCE_URL
         observation = { state: "unknown", description: "Account check unavailable", checkedAt: now.iso8601, error: nil }
         begin
           key = implementation.resolve_api_key
@@ -399,7 +391,9 @@ module TokenMaxx
           old = previous[:observation]
           observation[:lastGood] = old[:state] == "ok" ? old.reject { |key, _| key == :lastGood } : old[:lastGood]
         end
-        { schemaVersion: SCHEMA_VERSION, state: "unknown", scope: "coding", description: "Coding service health unavailable; account check only",
+        # Z.ai and Ollama publish no status page, so there is no coding health to
+        # report; the account check is an observation, never service health.
+        { schemaVersion: SCHEMA_VERSION, state: "unknown", scope: "coding", statusPage: false, description: "No public status page; account check only",
           coverage: "unavailable", services: [], incidents: [], incident: nil, incidentCoverage: "unavailable",
           vendor: { state: "unknown", description: "No authoritative public coding health source", sourceUrl: metadata[:sourceUrl] },
           observation: observation, source: metadata[:source], sourceUrl: metadata[:sourceUrl], updatedAt: nil, checkedAt: now.iso8601,
@@ -412,3 +406,4 @@ end
 
 require_relative "status/claude"
 require_relative "status/openai"
+require_relative "status/opencode"

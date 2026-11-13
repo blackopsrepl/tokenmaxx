@@ -3,3 +3,4 @@ Public vendor responses captured on 2026-11-13 for deterministic parser regressi
 - `openai-native.json`: https://status.openai.com/proxy/openai-1
 - `openai-summary.json`: https://status.openai.com/api/v2/summary.json
 - `claude-summary.json`: https://status.claude.com/api/v2/summary.json
+- `opencode-status.json`: https://status.opencode.ai/api/status (the `history` array is dropped; the parser does not read it)

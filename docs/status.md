@@ -13,17 +13,21 @@ that inference requests work.
 - **Claude:** Claude Code and Claude API, using
   `https://status.claude.com/api/v2/summary.json`. claude.ai and Cowork incidents
   are shown separately unless the vendor explicitly associates coding impact.
-- **Gemini:** the existing Google Cloud product-scoped incident feed at
-  `https://status.cloud.google.com/incidents.json`; this is product incident
-  evidence, not an end-to-end Gemini CLI inference check.
-- **OpenCode Go, Z.ai, Ollama Cloud:** their authenticated account endpoints provide
-  account checks, not inference health. Authorization errors, rate limits, and
-  account endpoint failures do not become vendor-wide coding outages.
-
-OpenAI's official website JSON at `https://status.openai.com/proxy/openai-1`
-supplements component health with incident associations. This is an undocumented
-website endpoint: its failure reduces incident coverage without discarding valid
-component health. All status payloads are validated, including page identity.
+- **Gemini:** Vertex Gemini API and Gemini Code Assist in the Google Cloud incident
+  feed at `https://status.cloud.google.com/incidents.json`. The feed carries every
+  incident Google publishes per product, so a tracked product with no active
+  incident is operational, as on Google's own status page. Incidents on other
+  Gemini-branded products (Gemini Enterprise and the like) are other services;
+  incidents on unrelated Google Cloud products are ignored.
+- **OpenCode Go:** the Inference API gateway and the Go plan, from OpenCode's
+  documented public status JSON at `https://status.opencode.ai/api/status`. Console
+  API, Request logs, Pay-as-you-go and Free inference are other services. Only
+  unresolved incidents are active, and a payload the vendor marks `stale` is not
+  fresh health.
+- **Z.ai, Ollama Cloud:** neither vendor publishes a status page, so the panel
+  says `No status page`. Their authenticated account endpoints provide account
+  checks only; authorization errors, rate limits, and account endpoint failures
+  do not become coding outages.
 
 ## Incidents and uncertainty
 
@@ -43,10 +47,14 @@ component change, not merely by a newer local retrieval. Missing components, unk
 responses, and incomplete feeds never imply operational service. All required
 coding components need fresh explicit operational evidence before showing green.
 
-Quota warnings remain quota-driven. Overview presents a concise scoped service
-summary and other-incident context. Provider Detail shows per-service evidence,
-coverage, account checks, and expandable incident updates. The Waybar chip stays
-quota-only; its tooltip explains scoped status. Service alert classes are reserved
+Quota warnings remain quota-driven. Overview shows one status line: coding health,
+then an amber or red notice naming the non-coding services (connectors, web apps)
+while they have an active incident; coding health then reads `Coding operational`,
+so nothing reads as an all-clear while a vendor service is impacted. Provider Detail shows a Coding services tile and, only
+during such an incident, an Other services tile naming what is affected. The full
+evidence (per-service records, sources, incidents, account checks) stays in
+`status.json` and `tokenmaxx status --json`. The Waybar chip stays quota-only; its
+tooltip adds the same one-line status. Service alert classes are reserved
 for confirmed fresh coding impact.
 
 ## Cache and freshness
@@ -79,5 +87,5 @@ tokenmaxx status --cached --format json --pretty
 Explicit status refresh updates the cache, rebuilds the snapshot, and signals
 Waybar. `--cached`, Waybar rendering, QuickShell and localhost `/status` and `/usage`
 read cached evidence only. They do not poll providers. Ruby owns normalization and
-presentation; QuickShell may compare a supplied expiration time with its clock,
-but does not classify incidents or infer vendor health.
+presentation; QuickShell renders the presenter's status text and state and does
+not classify incidents, evaluate expiration, or infer vendor health.

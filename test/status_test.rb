@@ -327,25 +327,26 @@ class StatusTest < Minitest::Test
     payload = [{ id: "synthetic-google", end: nil, status: "SERVICE_DISRUPTION", external_desc: "Vertex errors", affected_products: [{ title: "Vertex Gemini API" }] }]
     record = fetch("gemini", payloads: { url => payload })
     assert_equal "degraded", record[:state]
-    assert_equal "partial", record[:coverage]
+    assert_equal "complete", record[:coverage]
     assert_equal "Vertex Gemini API", record[:services].first[:name]
-    assert_includes record[:description], "not Gemini CLI"
+    assert_equal "ok", record[:services].last[:state], "a tracked product without an active incident is available"
     assert_equal ["Vertex Gemini API"], record[:incidents].first[:componentIds]
   end
 
   def test_account_endpoints_never_establish_inference_outage_or_operational
-    implementations = { "opencode" => TokenMaxx::Providers::Opencode, "zai" => TokenMaxx::Providers::Zai, "ollama" => TokenMaxx::Providers::Ollama }
+    implementations = { "zai" => TokenMaxx::Providers::Zai, "ollama" => TokenMaxx::Providers::Ollama }
     implementations.each do |provider, implementation|
       implementation.stub(:resolve_api_key, "synthetic-key") do
         [200, 401, 403, 429, 500, 503].each do |code|
           payload = case provider
-                    when "opencode" then { usage: { rolling: { percent: 20 } } }
                     when "zai" then { data: { limits: [{ type: "TOKENS_LIMIT", unit: 3, percentage: 20 }] } }
                     else { included: { balance_usd: 17.35, allowance_usd: 60 } }
                     end
           Http.stub(:request, response(payload, status: code)) do
             record = Status.fetch_provider(provider, now: NOW)
             assert_equal "unknown", record[:state], "#{provider} HTTP #{code}"
+            assert_equal false, record[:statusPage]
+            assert_equal "No status page", TokenMaxx::Core::Format.service_state_text(record)
             assert_equal "unavailable", record[:coverage]
             assert_equal code == 200 ? "ok" : "error", record[:observation][:state]
             assert_nil record[:updatedAt]
@@ -436,18 +437,88 @@ class StatusTest < Minitest::Test
     url = TokenMaxx::Core::Types::STATUS_METADATA["gemini"][:url]
     payload = [{ id: "synthetic-google", end: nil, status_impact: "SERVICE_OUTAGE", most_recent_update: { status: "AVAILABLE" }, affected_products: [{ title: "Vertex Gemini API" }] }]
     record = fetch("gemini", payloads: { url => payload })
-    assert_equal "unknown", record[:state]
-    assert_includes record[:description], "No active advisories"
+    assert_equal "ok", record[:state]
     assert_empty record[:incidents]
   end
 
-  def test_empty_google_advisory_feed_is_not_proof_of_operational_inference
+  def test_google_feed_without_active_gemini_incident_reports_operational
     url = TokenMaxx::Core::Types::STATUS_METADATA["gemini"][:url]
     record = fetch("gemini", payloads: { url => [] })
+    assert_equal "ok", record[:state]
+    assert_equal "complete", record[:coverage]
+    assert record[:services].all? { |service| service[:state] == "ok" }
+  end
+
+  def test_gemini_branded_product_incident_is_other_services_not_coding
+    url = TokenMaxx::Core::Types::STATUS_METADATA["gemini"][:url]
+    payload = [
+      { id: "enterprise", end: nil, most_recent_update: { status: "SERVICE_DISRUPTION" }, external_desc: "Gemini Enterprise errors", affected_products: [{ title: "Gemini Enterprise" }] },
+      { id: "bigquery", end: nil, most_recent_update: { status: "SERVICE_OUTAGE" }, external_desc: "BigQuery outage", affected_products: [{ title: "BigQuery" }] }
+    ]
+    record = fetch("gemini", payloads: { url => payload })
+    assert_equal "ok", record[:state]
+    assert_equal ["enterprise"], record[:incidents].map { |incident| incident[:id] }, "unrelated Google products are ignored"
+    assert_equal "other", record[:incidents].first[:scope]
+    assert_equal "degraded", record[:incidents].first[:state]
+    assert_equal "Gemini Enterprise degraded", TokenMaxx::Core::Format.other_services_text(record)
+  end
+
+  def opencode_feed(components: {}, incidents: [])
+    payload = fixture("opencode-status")
+    payload[:components].each { |component| component[:status] = components.fetch(component[:service], "operational") }
+    payload[:incidents] = incidents
+    { TokenMaxx::Core::Types::STATUS_METADATA["opencode"][:url] => payload }
+  end
+
+  def test_opencode_status_page_tracks_inference_and_go_as_coding
+    record = fetch("opencode", payloads: opencode_feed)
+    assert_equal "ok", record[:state]
+    assert_equal "complete", record[:coverage]
+    assert_equal ["Inference API", "Go"], record[:services].map { |service| service[:name] }
+
+    record = fetch("opencode", payloads: opencode_feed(components: { "go" => "outage" },
+      incidents: [{ id: "go-1", service: "go", startedAt: NOW.to_i * 1000, resolvedAt: nil, status: "outage", reason: "errors", models: [] }]))
+    assert_equal "outage", record[:state]
+    assert_equal "Outage: Go", TokenMaxx::Core::Format.service_status_text(record)
+    assert_equal "coding", record[:incidents].first[:scope]
+    assert_nil TokenMaxx::Core::Format.other_services_text(record)
+  end
+
+  def test_opencode_other_service_incident_never_reads_as_coding_impact
+    record = fetch("opencode", payloads: opencode_feed(components: { "payg" => "degraded" },
+      incidents: [
+        { id: "payg-1", service: "payg", startedAt: NOW.to_i * 1000, resolvedAt: nil, status: "degraded", reason: "latency", models: [] },
+        { id: "go-old", service: "go", startedAt: NOW.to_i * 1000, resolvedAt: NOW.to_i * 1000, status: "outage", reason: "errors", models: [] }
+      ]))
+    assert_equal "ok", record[:state]
+    assert_equal ["payg-1"], record[:incidents].map { |incident| incident[:id] }, "resolved incidents are not active"
+    assert_equal "other", record[:incidents].first[:scope]
+    assert_equal "Slow responses · Pay-as-you-go", record[:incidents].first[:title]
+    assert_equal "Coding operational", TokenMaxx::Core::Format.service_state_text(record)
+    assert_equal "Pay-as-you-go degraded", TokenMaxx::Core::Format.other_services_text(record)
+  end
+
+  def test_opencode_stale_vendor_data_is_not_fresh_health
+    feed = opencode_feed
+    feed.values.first[:stale] = true
+    record = fetch("opencode", payloads: feed)
     assert_equal "unknown", record[:state]
-    assert_equal "partial", record[:coverage]
-    assert record[:services].all? { |service| service[:state] == "unknown" }
-    assert_includes record[:description], "No active advisories"
+    assert_match(/stale/, record[:error])
+  end
+
+  # The Microsoft 365 connector outage hit OpenAI and Anthropic at once; OpenAI
+  # files it under Connectors/Apps and Anthropic under claude.ai and Cowork. Both
+  # cards must name the shared cause identically.
+  def test_shared_upstream_incident_reads_the_same_for_every_vendor
+    title = "Elevated errors affecting the Microsoft 365 connector"
+    openai = { state: "ok", services: [{ name: "Codex CLI", state: "ok" }],
+               incidents: [{ scope: "other", state: "degraded", title: title, affectedServices: ["Connectors/Apps"] }] }
+    anthropic = { state: "ok", services: [{ name: "Claude Code", state: "ok" }],
+                  incidents: [{ scope: "other", state: "degraded", title: title, affectedServices: ["claude.ai", "Claude Cowork"] }] }
+    texts = [openai, anthropic].map { |record| TokenMaxx::Core::Format.other_services_text(record) }
+    assert_equal ["Microsoft 365 connector degraded"] * 2, texts
+    untitled = openai.merge(incidents: [openai[:incidents].first.merge(title: "Connector errors")])
+    assert_equal "Connectors/Apps degraded", TokenMaxx::Core::Format.other_services_text(untitled)
   end
 
   def test_account_malformed_and_timeout_are_observations_not_health
