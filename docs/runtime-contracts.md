@@ -94,8 +94,9 @@ vendor-update timestamps, coverage and error independently. `freshness` is
 `fresh`, `stale`, or `unavailable`; stale display becomes `unknown` and retains
 `lastKnownState`. A fresh snapshot is not proof of fresh status. Cached CLI and
 localhost reads project expiration without writing or fetching. QuickShell reads
-the presenter projection and may evaluate its supplied expiration against a
-clock; no incident classification lives in QML.
+the presenter projection only: each provider view carries `serviceState`,
+`serviceStateText`, `serviceStatusText`, `otherServicesText`, `otherServicesState` and the
+`service-status`/`other-services-status` detail cards. No status logic lives in QML.
 
 Snapshot version 4 changes service-state semantics: coding status is not a global
 vendor indicator, and account observations are not inference health. Old unscoped

@@ -189,30 +189,27 @@ Release cutting, deployment, and publication to both remotes follow the step-by-
 - no synchronous provider quota fetches from provider state toggles
 - no broad install copy of the development checkout
 
-## Scoped status on the existing surfaces
+## Service status on the existing surfaces
 
-Overview keeps quota severity and its meter colors independent from coding status.
-A separate coding line uses vendor-reported scoped evidence; other-service incidents
-and unconfirmed scope stay neutral context. Opening a card focuses the existing
-Provider Detail coding section, without adding a tab.
+Overview shows service health as one line under the quota meter: coding health
+(`Operational`, `Coding operational` when another service is impacted, `Degraded`, `Partial outage`, `Maintenance`, `Outage`, `Status stale`, `Status unknown`, or `No status page` for Z.ai and Ollama Cloud) in its state
+colour, followed by a notice naming the affected non-coding services in the
+degraded (amber) or outage (red) colour, such as `· Connectors/Apps degraded`, only
+while an incident is scoped to them. Nothing reads green while a vendor service is
+impacted. The card
+height does not change, and quota severity keeps its own meter colours.
 
-Provider Detail shows **Coding services** with individual tracked service rows,
-raw vendor states, last successful retrieval and last attempt, freshness and coverage,
-and vendor/source links. Incidents are grouped as **Affects coding**, **Other services**,
-and **Scope unconfirmed**; mixed incidents appear once under coding with both scope
-memberships. Titles and latest updates are plain text, long updates expand inline,
-and incident links are keyboard-accessible buttons restricted to HTTPS vendor hosts.
-An incomplete incident list never says no incidents. Vendor-wide context is not coding
-health. **Account check** is separate: authentication, quota endpoint failures and
-successful account reads do not establish inference health.
+Provider Detail keeps its tile grid. A **Coding services** tile carries the coding
+state and the affected coding services (or all tracked ones when operational). An
+**Other services** tile appears only while non-coding services have an active
+incident, naming them, so a connector incident never reads as a coding outage.
+There is no separate evidence section and no added scrolling.
 
-The presenter applies backend status expiration when consuming cached data; the panel
-also compares `staleAt` against its clock, so stopped refreshes cannot remain green.
-Unknown/stale evidence is neutral, and retained stale incidents are context rather than
-fresh alerts. Legacy unscoped records await a scoped refresh. The existing scheduler
-still owns refresh timing; no independent status deadline or inference probe is implied.
+The presenter applies backend status expiration when consuming cached data, so
+stopped refreshes cannot remain green; QML does no status logic beyond colouring the
+presenter's state.
 
-Waybar text remains quota-only. Its escaped tooltip includes scoped status, freshness,
-coverage and concise other/unconfirmed incident context. `service-degraded` and
-`service-outage` classes require fresh confirmed coding impact, independently of quota
-warning/critical classes. QML and Waybar perform no status network requests.
+Waybar text remains quota-only. Its escaped tooltip adds one line per provider with
+the coding status and any other-services notice. `service-degraded` and
+`service-outage` classes require fresh confirmed coding impact, independently of
+quota warning/critical classes. QML and Waybar perform no status network requests.

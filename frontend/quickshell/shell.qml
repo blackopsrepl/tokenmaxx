@@ -361,46 +361,12 @@ ShellRoot {
         return Qt.rgba(r, g, b, alpha)
     }
 
-    // Expiration is presentation-only; scope and incident classification stay backend-owned.
-    Timer {
-        interval: 1000
-        repeat: true
-        running: true
-        onTriggered: root.nowMs = Date.now()
-    }
-
-    function serviceExpired(service) {
-        return !!service && !!service.staleAt && root.nowMs >= Date.parse(service.staleAt)
-    }
-
-    function incidentCoverage(service) {
-        if (!service) return "unavailable"
-        if (service.incidentStaleAt && root.nowMs >= Date.parse(service.incidentStaleAt)) return "unavailable"
-        return service.incidentCoverage || "unavailable"
-    }
-
-    function serviceSummary(provider) {
-        var service = provider ? provider.service : null
-        if (!service) return "Coding status unknown"
-        return serviceExpired(service) ? "Coding status stale · refresh required" : service.summary
-    }
-
-    function serviceColor(provider, state) {
-        var service = provider ? provider.service : null
-        if (!service || serviceExpired(service) || service.freshness !== "fresh") return root.theme.textMuted
-        var current = state || service.state
-        if (current === "outage") return root.theme.bad
-        if (current === "degraded") return root.theme.warn
-        return current === "ok" ? root.theme.good : root.theme.textMuted
-    }
-
-    function openServiceDetail(provider) {
-        root.setFocus(provider.id)
-        root.setView("detail")
-        Qt.callLater(function() {
-            if (detailScroll.contentItem) detailScroll.contentItem.contentY = Math.max(0, Math.min(serviceSection.y, detailScroll.contentHeight - detailScroll.availableHeight))
-            serviceSection.forceActiveFocus()
-        })
+    function serviceColor(provider) {
+        var state = provider ? provider.serviceState : ""
+        if (state === "outage") return root.theme.bad
+        if (state === "degraded") return root.theme.warn
+        if (state === "ok") return root.theme.good
+        return root.theme.textMuted
     }
 
     function statusColor(provider) {
@@ -412,9 +378,6 @@ ShellRoot {
         }
         if (provider.status === "warning") {
             return root.theme.warn
-        }
-        if (provider.status === "incident") {
-            return root.theme.info
         }
         if (provider.status === "stale" || provider.status === "loading") {
             return root.theme.textMuted
@@ -796,53 +759,6 @@ ShellRoot {
         snapshotFile.reload()
         uiFile.reload()
         peakClock.arm()
-    }
-
-    component EvidenceLabel: Label {
-        Layout.fillWidth: true
-        Layout.minimumWidth: 0
-        Layout.preferredWidth: 1
-        textFormat: Text.PlainText
-        wrapMode: Text.Wrap
-        color: root.theme.textBody
-        font.family: root.textFont
-        font.pixelSize: 11
-    }
-
-    component IncidentEntry: ColumnLayout {
-        id: incidentEntry
-        required property var incident
-        property bool expanded: false
-        Layout.fillWidth: true
-        spacing: 5
-        EvidenceLabel { text: incidentEntry.incident.title || "Untitled incident"; font.bold: true }
-        EvidenceLabel {
-            text: root.compactJoin([incidentEntry.incident.scopeText, root.serviceExpired(incidentEntry.incident) ? "stale context" : incidentEntry.incident.impactText, incidentEntry.incident.status, incidentEntry.incident.severity !== "unknown" ? incidentEntry.incident.severity : "", root.serviceExpired(incidentEntry.incident) ? "" : incidentEntry.incident.freshness])
-            color: root.theme.textDim
-        }
-        EvidenceLabel { text: "Affected: " + (incidentEntry.incident.affectedText || "Vendor did not specify services") }
-        EvidenceLabel { text: "Vendor update: " + (incidentEntry.incident.updatedAt || "Not supplied"); color: root.theme.textDim }
-        EvidenceLabel {
-            property string update: incidentEntry.incident.updateText || "No update text supplied"
-            text: incidentEntry.expanded || update.length <= 320 ? update : update.slice(0, 320) + "…"
-        }
-        Flow {
-            Layout.fillWidth: true
-            spacing: 8
-            CodexButton {
-                visible: (incidentEntry.incident.updateText || "").length > 320
-                text: incidentEntry.expanded ? "Less update" : "Expand update"
-                Accessible.name: text + ": " + incidentEntry.incident.title
-                onClicked: incidentEntry.expanded = !incidentEntry.expanded
-            }
-            CodexButton {
-                visible: !!incidentEntry.incident.url
-                text: "Open incident"
-                Accessible.name: "Open vendor incident: " + incidentEntry.incident.title
-                onClicked: Qt.openUrlExternally(incidentEntry.incident.url)
-            }
-        }
-        Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.theme.textMuted; opacity: 0.2 }
     }
 
     component CodexButton: Button {
@@ -1888,14 +1804,8 @@ ShellRoot {
 
                                             delegate: CardFrame {
                                                 required property var modelData
-                                                activeFocusOnTab: true
-                                                Accessible.role: Accessible.Button
-                                                Accessible.name: modelData.label + ": " + root.serviceSummary(modelData) + ". Open coding service details"
-                                                Accessible.onPressAction: root.openServiceDetail(modelData)
-                                                Keys.onReturnPressed: root.openServiceDetail(modelData)
-                                                Keys.onSpacePressed: root.openServiceDetail(modelData)
                                                 Layout.fillWidth: true
-                                                Layout.preferredHeight: root.dense ? 146 : 176
+                                                Layout.preferredHeight: root.dense ? 106 : 150
                                                 accent: statusColor(modelData)
                                                 color: modelData.id === root.focusProviderId ? root.theme.surface : (cardHover.containsMouse ? root.theme.surfaceHi : root.theme.surface)
 
@@ -1909,7 +1819,8 @@ ShellRoot {
                                                     cursorShape: Qt.PointingHandCursor
                                                     hoverEnabled: true
                                                     onClicked: {
-                                                        root.openServiceDetail(modelData)
+                                                        root.setFocus(modelData.id)
+                                                        root.setView("detail")
                                                     }
                                                 }
 
@@ -1980,24 +1891,31 @@ ShellRoot {
                                                         visible: !!modelData.dominantMetric
                                                     }
 
-                                                    Label {
+                                                    RowLayout {
                                                         Layout.fillWidth: true
-                                                        text: root.serviceSummary(modelData)
-                                                        textFormat: Text.PlainText
-                                                        color: root.serviceColor(modelData)
-                                                        font.family: root.textFont
-                                                        font.pixelSize: 10
-                                                        elide: Text.ElideRight
-                                                    }
+                                                        spacing: 6
 
-                                                    Label {
-                                                        Layout.fillWidth: true
-                                                        visible: !!modelData.service && !!modelData.service.context
-                                                        text: modelData.service ? modelData.service.context : ""
-                                                        textFormat: Text.PlainText
-                                                        color: root.theme.textDim
-                                                        font.pixelSize: 10
-                                                        elide: Text.ElideRight
+                                                        Label {
+                                                            Layout.fillWidth: !modelData.otherServicesText
+                                                            Layout.minimumWidth: 0
+                                                            Layout.maximumWidth: implicitWidth
+                                                            text: modelData.serviceStateText || "Status unknown"
+                                                            color: root.serviceColor(modelData)
+                                                            font.family: root.textFont
+                                                            font.pixelSize: 10
+                                                            elide: Text.ElideRight
+                                                        }
+
+                                                        Label {
+                                                            visible: !!modelData.otherServicesText
+                                                            Layout.minimumWidth: 0
+                                                            Layout.fillWidth: true
+                                                            text: "· " + (modelData.otherServicesText || "")
+                                                            color: modelData.otherServicesState === "outage" ? root.theme.bad : root.theme.warn
+                                                            font.family: root.textFont
+                                                            font.pixelSize: 10
+                                                            elide: Text.ElideRight
+                                                        }
                                                     }
 
                                                     Label {
@@ -2054,7 +1972,7 @@ ShellRoot {
 
                                                 Label {
                                                     Layout.fillWidth: true
-                                                    text: displayProvider() ? root.compactJoin([displayProvider().chipText, root.serviceSummary(displayProvider()), displayProvider().historySummary]) : "Waiting for cached data"
+                                                    text: displayProvider() ? root.compactJoin([displayProvider().chipText, displayProvider().serviceStatusText, displayProvider().historySummary]) : "Waiting for cached data"
                                                     color: root.theme.textBody
                                                     font.family: root.textFont
                                                     font.pixelSize: 11
@@ -2139,9 +2057,8 @@ ShellRoot {
                                                         }
 
                                                         Label {
-                                                            text: focusProvider() ? (root.serviceSummary(focusProvider()) + (focusProvider().localUsageText ? ("  •  " + focusProvider().localUsageText) : "")) : ""
-                                                            color: root.serviceColor(focusProvider())
-                                                            textFormat: Text.PlainText
+                                                            text: focusProvider() ? ((focusProvider().serviceStatusText || "Status unknown") + (focusProvider().localUsageText ? ("  •  " + focusProvider().localUsageText) : "")) : ""
+                                                            color: focusProvider() ? statusColor(focusProvider()) : root.theme.textDim
                                                             font.family: root.textFont
                                                             font.pixelSize: 10
                                                             elide: Text.ElideRight
@@ -2236,98 +2153,6 @@ ShellRoot {
                                                     Layout.fillWidth: true
                                                 }
                                             }
-                                        }
-
-                                        ColumnLayout {
-                                            id: serviceSection
-                                            Layout.maximumWidth: Math.max(1, detailScroll.availableWidth - 24)
-                                            Layout.preferredWidth: Math.max(1, detailScroll.availableWidth - 24)
-                                            property var provider: root.focusProvider()
-                                            property var service: provider ? provider.service : null
-                                            property bool showSources: false
-                                            Layout.fillWidth: true
-                                            Layout.minimumWidth: 0
-                                            activeFocusOnTab: true
-                                            Accessible.name: "Coding services"
-                                            spacing: 8
-                                            EvidenceLabel { text: "Coding services"; font.bold: true; font.pixelSize: 15 }
-                                            EvidenceLabel { text: root.serviceSummary(serviceSection.provider); color: root.serviceColor(serviceSection.provider) }
-                                            EvidenceLabel {
-                                                text: serviceSection.service ? ("Coverage: " + serviceSection.service.coverage + " · " + (root.serviceExpired(serviceSection.service) ? "stale" : serviceSection.service.freshness)) : "Coverage unavailable"
-                                                color: root.theme.textDim
-                                            }
-                                            EvidenceLabel {
-                                                text: serviceSection.service ? ("Last successful retrieval: " + (serviceSection.service.updatedAt || "Never") + " · Last attempt: " + (serviceSection.service.checkedAt || "Never")) : "Not checked"
-                                                color: root.theme.textDim
-                                            }
-                                            Repeater {
-                                                model: serviceSection.service ? serviceSection.service.services : []
-                                                delegate: EvidenceLabel {
-                                                    required property var modelData
-                                                    text: (modelData.name || modelData.id) + ": " + (root.serviceExpired(modelData) ? "stale (last known " + (modelData.lastKnownState || modelData.state) + ")" : modelData.state) + " · vendor: " + (modelData.rawStatus || "not supplied") + (modelData.conflict ? " · conflicting evidence" : "") + (modelData.error ? " · " + modelData.error : "")
-                                                    color: root.serviceExpired(modelData) ? root.theme.textMuted : root.serviceColor(serviceSection.provider, modelData.state)
-                                                }
-                                            }
-                                            EvidenceLabel {
-                                                visible: !!serviceSection.service && !!serviceSection.service.error
-                                                text: serviceSection.service ? serviceSection.service.error || "" : ""
-                                            }
-                                            CodexButton {
-                                                visible: !!serviceSection.service && !!serviceSection.service.sourceUrl
-                                                text: "Vendor status page"
-                                                Accessible.name: "Open vendor status page for " + (serviceSection.provider ? serviceSection.provider.label : "provider")
-                                                onClicked: Qt.openUrlExternally(serviceSection.service.sourceUrl)
-                                            }
-                                            EvidenceLabel {
-                                                visible: !!serviceSection.service && !!serviceSection.service.vendorText
-                                                text: "Vendor-wide context (not coding health): " + (serviceSection.service ? serviceSection.service.vendorText || "" : "")
-                                            }
-                                            CodexButton {
-                                                text: serviceSection.showSources ? "Hide source details" : "Source details"
-                                                Accessible.name: text
-                                                onClicked: serviceSection.showSources = !serviceSection.showSources
-                                            }
-                                            ColumnLayout {
-                                                visible: serviceSection.showSources
-                                                Layout.fillWidth: true
-                                                Repeater {
-                                                    model: serviceSection.service ? serviceSection.service.sources : []
-                                                    delegate: ColumnLayout {
-                                                        required property var modelData
-                                                        Layout.fillWidth: true
-                                                        EvidenceLabel { text: root.compactJoin([modelData.kind || "Source", modelData.pageId ? "Page " + modelData.pageId : "", modelData.vendorUpdatedAt ? "Vendor updated " + modelData.vendorUpdatedAt : "", root.serviceExpired(modelData) ? "stale" : modelData.freshness, modelData.coverage ? "coverage " + modelData.coverage : "", modelData.attemptedAt ? "Attempted " + modelData.attemptedAt : "", modelData.lastSuccessAt ? "Retrieved " + modelData.lastSuccessAt : "No successful retrieval", modelData.error]); color: root.theme.textDim }
-                                                        CodexButton {
-                                                            visible: !!modelData.url
-                                                            text: "Open source"
-                                                            Accessible.name: "Open status source " + (modelData.kind || "vendor")
-                                                            onClicked: Qt.openUrlExternally(modelData.url)
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            EvidenceLabel { text: "Incidents · coverage " + root.incidentCoverage(serviceSection.service); font.bold: true }
-                                            EvidenceLabel {
-                                                visible: !!serviceSection.service && serviceSection.service.groups.length === 0
-                                                text: root.incidentCoverage(serviceSection.service) === "complete" ? "No reported active incidents" : "Incident list incomplete or unavailable"
-                                            }
-                                            EvidenceLabel { visible: root.serviceExpired(serviceSection.service); text: "Retained incidents are stale context, not fresh alerts."; color: root.theme.textDim }
-                                            Repeater {
-                                                model: serviceSection.service ? serviceSection.service.groups : []
-                                                delegate: ColumnLayout {
-                                                    required property var modelData
-                                                    Layout.fillWidth: true
-                                                    EvidenceLabel { text: modelData.label; font.bold: true }
-                                                    Repeater {
-                                                        model: modelData.incidents
-                                                        delegate: IncidentEntry { required property var modelData; incident: modelData }
-                                                    }
-                                                }
-                                            }
-                                            EvidenceLabel { text: "Account check"; font.bold: true }
-                                            EvidenceLabel {
-                                                text: serviceSection.service && serviceSection.service.observation ? root.compactJoin([root.serviceExpired(serviceSection.service.observation) ? "stale account observation" : serviceSection.service.observation.state, serviceSection.service.observation.description, serviceSection.service.observation.checkedAt, serviceSection.service.observation.error]) : "No account check reported. Quota retrieval is not a coding service probe."
-                                            }
-                                            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: root.theme.textMuted; opacity: 0.2 }
                                         }
 
                                         GridLayout {
@@ -2432,7 +2257,7 @@ ShellRoot {
                                         }
 
                                         CardFrame {
-                                            visible: !!(focusProvider() && (focusProvider().error || focusProvider().notes.length || focusProvider().incident))
+                                            visible: !!(focusProvider() && (focusProvider().error || focusProvider().notes.length))
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: notesColumn.implicitHeight + 24
                                             accent: focusProvider() ? statusColor(focusProvider()) : root.theme.bad
@@ -2467,16 +2292,6 @@ ShellRoot {
                                                     visible: !!(focusProvider() && focusProvider().error)
                                                     text: focusProvider() ? focusProvider().error : ""
                                                     color: root.theme.badSoft
-                                                    font.family: root.textFont
-                                                    font.pixelSize: 11
-                                                    wrapMode: Text.Wrap
-                                                    Layout.fillWidth: true
-                                                }
-
-                                                Label {
-                                                    visible: !!(focusProvider() && focusProvider().incident)
-                                                    text: focusProvider() ? focusProvider().incident : ""
-                                                    color: root.theme.info
                                                     font.family: root.textFont
                                                     font.pixelSize: 11
                                                     wrapMode: Text.Wrap

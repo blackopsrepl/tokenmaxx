@@ -3,13 +3,19 @@
 require_relative "test_helper"
 
 class QuickShellTest < Minitest::Test
-  def test_scoped_service_surface_is_plain_accessible_and_clock_expiring
+  # Service health is one overview line: coding health in its state colour, then
+  # other-service incidents (connectors, web apps) in a muted second label. No
+  # evidence section in Provider Detail; the Service tile carries the same text.
+  def test_service_health_is_one_line_with_other_services_apart
     qml = File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
-    ["Coding services", "Account check", "Incident list incomplete or unavailable", "Retained incidents are stale context", "Accessible.name: \"Open vendor incident:", "textFormat: Text.PlainText", "function serviceExpired", "root.openServiceDetail(modelData)", "Expand update"].each do |text|
-      assert_includes qml, text
+
+    assert_match(/text: modelData\.serviceStateText \|\| "Status unknown"\n\s+color: root\.serviceColor\(modelData\)/, qml)
+    assert_match(/text: "· " \+ \(modelData\.otherServicesText \|\| ""\)\n\s+color: modelData\.otherServicesState === "outage" \? root\.theme\.bad : root\.theme\.warn/, qml)
+    %w[serviceSection EvidenceLabel IncidentEntry openServiceDetail].each do |gone|
+      refute_includes qml, gone
     end
-    assert_includes qml, "model: serviceSection.service ? serviceSection.service.groups : []"
-    refute_includes qml, "text: modelData.serviceStatusText"
+    assert_includes qml, "Layout.preferredHeight: root.dense ? 106 : 150",
+                    "overview cards keep their height; health must not add a row"
   end
 
   def test_ui_adapter_only_writes_ui_state_on_explicit_actions

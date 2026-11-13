@@ -38,7 +38,7 @@ The panel renders:
 - summary band
 - view tabs for Overview, Provider Detail, History, and Settings
 - Overview: active display provider, freshness, service/runtime/privacy state, a cumulative token usage heatmap (single week grid summing local tokens across every provider), and compact cards for enabled, visible overview providers; every overview member renders with no fixed provider cap, and each card shows an equivalent compact summary (five-hour and weekly lanes for window providers, dominant model for model-meter providers, and the provider's own lane label where it declares one, such as Ollama Cloud's monthly `mo` allowance) plus a peak/off-peak badge when the provider has time-of-day pricing
-- Provider Detail: focused provider identity, quota hero with a peak/off-peak badge, a peak card showing the current window in local time, local/history/storage detail cards and the scoped coding service section (the local usage card names the stores that summary covers), model local usage rows with per-model peak markers when present, alerts, provider rail, and provider actions
+- Provider Detail: focused provider identity, quota hero with a peak/off-peak badge, a peak card showing the current window in local time, Coding services and (while an incident is active) Other services tiles, local/history/storage detail cards (the local usage card names the stores that summary covers), model local usage rows with per-model peak markers when present, alerts, provider rail, and provider actions
 - History: retained presenter history for the focused provider, including a daily token usage heatmap (GitHub-style week grid with a single green fill ramp for local token totals, a neutral slate for retained days without local tokens, and inline window/active/streak/best stats), quota bars, local token summaries, and per-model quota for model-meter providers; days with no quota sample or local usage are omitted and the view shows its empty state when no day remains
 - Settings: cadence, display mode, notification, privacy, scan, and cache-clear controls
 
@@ -64,30 +64,27 @@ Runtime controls include manual, 1m, 2m, 5m, 15m, and 30m refresh cadence, notif
 
 The UI uses text plus Nerd Font glyph metadata from the Ruby provider metadata. Missing glyph support affects visual polish but not provider fetching.
 
-## Scoped status on the existing surfaces
+## Service status on the existing surfaces
 
-Overview keeps quota severity and its meter colors independent from coding status.
-A separate coding line uses vendor-reported scoped evidence; other-service incidents
-and unconfirmed scope stay neutral context. Opening a card focuses the existing
-Provider Detail coding section, without adding a tab.
+Overview shows service health as one line under the quota meter: coding health
+(`Operational`, `Coding operational` when another service is impacted, `Degraded`, `Partial outage`, `Maintenance`, `Outage`, `Status stale`, `Status unknown`, or `No status page` for Z.ai and Ollama Cloud) in its state
+colour, followed by a notice naming the affected non-coding services in the
+degraded (amber) or outage (red) colour, such as `· Connectors/Apps degraded`, only
+while an incident is scoped to them. Nothing reads green while a vendor service is
+impacted. The card
+height does not change, and quota severity keeps its own meter colours.
 
-Provider Detail shows **Coding services** with individual tracked service rows,
-raw vendor states, last successful retrieval and last attempt, freshness and coverage,
-and vendor/source links. Incidents are grouped as **Affects coding**, **Other services**,
-and **Scope unconfirmed**; mixed incidents appear once under coding with both scope
-memberships. Titles and latest updates are plain text, long updates expand inline,
-and incident links are keyboard-accessible buttons restricted to HTTPS vendor hosts.
-An incomplete incident list never says no incidents. Vendor-wide context is not coding
-health. **Account check** is separate: authentication, quota endpoint failures and
-successful account reads do not establish inference health.
+Provider Detail keeps its tile grid. A **Coding services** tile carries the coding
+state and the affected coding services (or all tracked ones when operational). An
+**Other services** tile appears only while non-coding services have an active
+incident, naming them, so a connector incident never reads as a coding outage.
+There is no separate evidence section and no added scrolling.
 
-The presenter applies backend status expiration when consuming cached data; the panel
-also compares `staleAt` against its clock, so stopped refreshes cannot remain green.
-Unknown/stale evidence is neutral, and retained stale incidents are context rather than
-fresh alerts. Legacy unscoped records await a scoped refresh. The existing scheduler
-still owns refresh timing; no independent status deadline or inference probe is implied.
+The presenter applies backend status expiration when consuming cached data, so
+stopped refreshes cannot remain green; QML does no status logic beyond colouring the
+presenter's state.
 
-Waybar text remains quota-only. Its escaped tooltip includes scoped status, freshness,
-coverage and concise other/unconfirmed incident context. `service-degraded` and
-`service-outage` classes require fresh confirmed coding impact, independently of quota
-warning/critical classes. QML and Waybar perform no status network requests.
+Waybar text remains quota-only. Its escaped tooltip adds one line per provider with
+the coding status and any other-services notice. `service-degraded` and
+`service-outage` classes require fresh confirmed coding impact, independently of
+quota warning/critical classes. QML and Waybar perform no status network requests.

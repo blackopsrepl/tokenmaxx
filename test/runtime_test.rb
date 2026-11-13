@@ -25,11 +25,12 @@ class RuntimeTest < Minitest::Test
     snapshot = TokenMaxx::Runtime::State.build_snapshot(config, ["codex"], results, now, service_status: { schemaVersion: 2, providers: { "codex" => record } })
     view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
     assert_equal "critical", view[:status]
-    assert_nil view[:incident]
-    assert_equal ["Affects coding", "Other services", "Scope unconfirmed"], view[:service][:groups].map { |group| group[:label] }
-    assert_equal 3, view[:service][:groups].sum { |group| group[:incidents].length }
-    assert_nil view[:service][:groups][1][:incidents][0][:url]
-    assert_equal 900, view[:service][:groups][0][:incidents][0][:updateText].length
+    assert_equal "Outage: Codex CLI", view[:serviceStatusText]
+    assert_nil view[:otherServicesText], "an other-scope incident with unknown impact is not reported"
+    tile = view[:detailCards].find { |card| card[:key] == "service-status" }
+    assert_equal "outage", tile[:value]
+    assert_equal "Codex CLI", tile[:detail]
+    assert_nil view[:detailCards].find { |card| card[:key] == "other-services-status" }
     assert_includes snapshot.dig(:view, :chip, :classes), "service-outage"
     expired = TokenMaxx::Runtime::Presenter.build_snapshot_view(config, snapshot, now + 601)
     refute_includes expired.dig(:chip, :classes), "service-outage"
@@ -42,28 +43,31 @@ class RuntimeTest < Minitest::Test
     config = TokenMaxx::Core::Config.set_selected_provider(config, "codex")
     results = { "codex" => provider_result(provider: "codex", usage: usage_payload(provider: "codex", now: now,
       primary: window(used_percent: 5, window_minutes: 300, now: now, resets_in_minutes: 240))) }
-    record = scoped_status(now, description: "Coding <operational> & confirmed", incidents: [{ id: "m365", state: "unknown", scope: "other", title: "M365 outage", checkedAt: now.iso8601 }],
+    record = scoped_status(now, description: "Coding <operational> & confirmed", incidents: [{ id: "m365", state: "degraded", status: "identified", currentImpacts: [{ id: "m365", state: "degraded" }], scope: "other", title: "M365 outage", affectedServices: ["Microsoft 365 connector", "Codex CLI"], checkedAt: now.iso8601 }],
       observation: {state: "error", description: "Account <401> & failure"})
     snapshot = TokenMaxx::Runtime::State.build_snapshot(config, ["codex"], results, now, service_status: {schemaVersion: 2, providers: {"codex" => record}})
     view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
     assert_equal "healthy", view[:status]
     assert_equal "ok", view[:serviceState]
-    assert_nil view[:incident]
+    assert_equal "Coding operational", view[:serviceStatusText]
+    assert_equal "Microsoft 365 connector degraded", view[:otherServicesText]
+    assert_equal "Coding operational", view[:serviceStateText], "never a bare Operational beside a degraded service"
+    assert_equal "degraded", view[:otherServicesState]
+    tile = view[:detailCards].find { |card| card[:key] == "service-status" }
+    assert_equal "operational", tile[:value]
+    assert_equal "Codex CLI", tile[:detail]
+    other = view[:detailCards].find { |card| card[:key] == "other-services-status" }
+    assert_equal "degraded", other[:value]
+    assert_equal "Microsoft 365 connector", other[:detail]
     payload = TokenMaxx::Runtime::Waybar.payload(config, snapshot, now)
     refute_includes payload[:class], "service-outage"
     refute_includes payload[:class], "service-degraded"
-    assert_includes payload[:tooltip], "Coding &lt;operational&gt; &amp; confirmed"
-    assert_includes payload[:tooltip], "1 other-service incident"
-    assert_includes payload[:tooltip], "Account &lt;401&gt; &amp; failure"
+    assert_includes payload[:tooltip], "Coding operational · Microsoft 365 connector degraded"
+    refute_includes payload[:tooltip], "Account"
     assert_equal "󰚩 95%", payload[:text]
   end
 
-  def test_scoped_links_and_markup_are_safe
-    presenter = TokenMaxx::Runtime::Presenter
-    %w[http://status.openai.com/x https://status.openai.com.evil.test/x https://evil@status.openai.com/x javascript:alert(1) https://status.openai.com:444/x].each do |url|
-      assert_nil presenter.status_link("codex", url)
-    end
-    assert_equal "https://status.openai.com/incidents/1", presenter.status_link("codex", "https://status.openai.com/incidents/1")
+  def test_markup_is_escaped
     assert_equal "&lt;b&gt;&amp;&quot;&apos;", TokenMaxx::Core::Format.escape_markup("<b>&\"'")
   end
 
@@ -140,7 +144,7 @@ class RuntimeTest < Minitest::Test
     assert_includes codex_view[:badges], "display"
     assert_includes claude_view[:badges], "hidden"
     assert_equal "error", claude_view[:status]
-    assert_equal "Coding services vendor-reported operational", codex_view[:serviceStatusText]
+    assert_equal "Operational", codex_view[:serviceStatusText]
     assert_equal "1 retained days / 12.3k local tokens / 42% peak quota", codex_view[:historySummary]
     assert_equal 42.0, codex_view[:historyDays].first[:barPercent]
     assert_equal "12.3k tok / 7 records", codex_view[:historyDays].first[:detail]

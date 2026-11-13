@@ -129,7 +129,7 @@ class CliTest < Minitest::Test
       codex = rebuilt.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
       assert TokenMaxx::Runtime::State.result_for(rebuilt, "codex")[:usage]
       assert_equal "ok", codex[:serviceState]
-      assert_equal "Coding services operational", codex[:serviceStatusText]
+      assert_equal "Operational", codex[:serviceStatusText]
     end
   end
 

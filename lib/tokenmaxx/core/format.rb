@@ -93,19 +93,79 @@ module TokenMaxx
       end
 
       # The caller must first apply Status.for_display, including expiration.
+      # Coding health in a few words: the state, plus the coding services it names.
       def service_status_text(status)
-        return "Coding status unknown" unless status
-        return "Coding status stale (last known #{status[:lastKnownState] || 'unknown'})" if status[:freshness] == "stale"
+        label = service_state_text(status)
+        return label unless ["Degraded", "Partial outage", "Maintenance", "Outage"].include?(label)
 
-        description = clean(status[:description])
-        return description if description
+        affected = affected_service_names(status)
+        affected.empty? ? label : "#{label}: #{affected.join(', ')}"
+      end
 
-        case status[:state].to_s
-        when "ok" then "Coding services vendor-reported operational"
-        when "degraded" then "Coding services degraded"
-        when "outage" then "Coding services outage"
-        else "Coding status unknown"
+      # The colour follows the shared alert scale (Runtime::Status); the label
+      # keeps the vendor's wording inside the degraded tier.
+      def service_state_text(status)
+        return "Status unknown" unless status && !status.empty?
+        return "No status page" if status[:statusPage] == false
+        return "Status stale" if status[:freshness] == "stale"
+
+        state = status[:state].to_s
+        if state == "degraded"
+          raw = Array(status[:services]).select { |service| service[:state].to_s == "degraded" }.map { |service| service[:rawStatus].to_s }
+          return "Partial outage" if raw.include?("partial_outage")
+          return "Maintenance" if !raw.empty? && raw.all?("under_maintenance")
         end
+        # "Operational" beside a degraded connector reads as all-clear; scope it.
+        return other_services_state(status) ? "Coding operational" : "Operational" if state == "ok"
+
+        { "degraded" => "Degraded", "outage" => "Outage" }.fetch(state, "Status unknown")
+      end
+
+      def affected_service_names(status)
+        Array(status && status[:services]).select { |service| %w[degraded outage].include?(service[:state].to_s) }
+                                          .filter_map { |service| clean(service[:name]) }
+      end
+
+      # Active incidents scoped to non-coding services (connectors, web apps). They
+      # stay apart from coding health so they never read as a coding outage.
+      def other_service_incidents(status)
+        Array(status && status[:incidents]).select do |incident|
+          %w[other unconfirmed].include?(incident[:scope].to_s) && %w[degraded outage].include?(incident[:state].to_s)
+        end
+      end
+
+      def other_services_state(status)
+        states = other_service_incidents(status).map { |incident| incident[:state].to_s }
+        return "outage" if states.include?("outage")
+
+        states.empty? ? nil : "degraded"
+      end
+
+      # The non-coding services those incidents name, so the notice says what is
+      # affected (for example `Connectors/Apps degraded`) instead of a generic label.
+      def other_service_names(status)
+        coding = Array(status && status[:services]).filter_map { |service| clean(service[:name])&.downcase }
+        other_service_incidents(status).flat_map { |incident| Array(incident[:affectedServices]) }
+                                       .filter_map { |entry| clean(entry.is_a?(Hash) ? entry[:name] : entry) }
+                                       .reject { |name| coding.include?(name.downcase) }.uniq
+      end
+
+      # One shared upstream cause (a Microsoft 365 connector failure hitting both
+      # OpenAI and Anthropic) must read the same on every card, but each vendor
+      # files it under different components. The incident title names the actual
+      # subject ("Elevated errors affecting the Microsoft 365 connector"), so it
+      # wins; component names are the fallback when the title names none.
+      SUBJECT_PATTERN = /\b(?:affecting|impacting)\s+(?:the\s+)?(?<subject>.+?)\s*\z/i
+
+      def other_services_text(status)
+        state = other_services_state(status)
+        return nil unless state
+
+        incidents = other_service_incidents(status)
+        subjects = incidents.map { |incident| clean(incident[:title])&.match(SUBJECT_PATTERN)&.[](:subject) }
+        names = subjects.all? ? subjects.uniq : other_service_names(status)
+        names = incidents.filter_map { |incident| clean(incident[:title]) }.uniq if names.empty?
+        names.empty? ? "Other services #{state}" : "#{names.join(', ')} #{state}"
       end
 
       def redact_email(value)
