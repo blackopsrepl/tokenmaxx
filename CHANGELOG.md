@@ -1,6 +1,27 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## [2.6.0](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.3...v2.6.0) (2026-11-13)
+
+
+### Features
+
+* **panel:** show affected services and scoped incident updates ([947e0c0](https://github.com/blackopsrepl/tokenmaxx/commit/947e0c06f7d68167dd4f6aa11ac1e5baf13c7029))
+* **runtime:** project scoped health through cached consumers ([c50ece2](https://github.com/blackopsrepl/tokenmaxx/commit/c50ece2c8165f8a726a291f4713e79b5e444f47a))
+* **status:** distinguish coding impact from provider incidents ([a7ee37a](https://github.com/blackopsrepl/tokenmaxx/commit/a7ee37ac08bb253c39fff0ebd8f664a86ba4c3fe))
+
+
+### Bug Fixes
+
+* **checks:** validate Ruby sources without masking failures ([2cffa7f](https://github.com/blackopsrepl/tokenmaxx/commit/2cffa7f117f5ea8e66d714ca6d211302570d2af8))
+* **peak:** limit rate schedules to vendor-documented models ([7533aa9](https://github.com/blackopsrepl/tokenmaxx/commit/7533aa9efd4062226c0f9bce33cb912f2e8d992f))
+
+
+### Build System
+
+* **release:** migrate version surfaces to native csemver ([efefec7](https://github.com/blackopsrepl/tokenmaxx/commit/efefec7681dc950914753564f0fbece2968f1e4e))
+
 
 ## [2.5.3](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.2...v2.5.3) (2026-10-14)
 
