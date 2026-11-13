@@ -78,7 +78,7 @@ cd "$ROOT_DIR"
 
 run_step "pre-commit" python3 -m pre_commit run --all-files
 run_step "bash syntax" bash -n bin/release-check
-run_step "ruby syntax" bash -lc 'for path in bin/tokenmaxx $(rg --files lib test); do ruby -wc "$path"; done'
+run_step "ruby syntax" bash -lc 'for path in bin/tokenmaxx $(rg --files lib test -g "*.rb"); do ruby -wc "$path" || exit $?; done'
 run_step "test suite" ruby -Itest test/run.rb
 run_quiet_step "config init" env HOME="$TMP_ROOT" bin/tokenmaxx config init --config "$TMP_CONFIG"
 run_step "config validate" env HOME="$TMP_ROOT" bin/tokenmaxx config validate --config "$TMP_CONFIG"

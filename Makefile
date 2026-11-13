@@ -28,7 +28,7 @@ BIN_DIR := $(PREFIX)/bin
 CONFIG ?= $(HOME)/.config/tokenmaxx/config.json
 SOLVERFORGE_PATH ?= $(HOME)/.local/share/solverforge
 
-RUBY_SOURCES := bin/tokenmaxx $(shell rg --files lib test)
+RUBY_SOURCES := bin/tokenmaxx $(shell rg --files lib test -g '*.rb')
 
 INSTALL_FILES := \
 	AGENTS.md \
@@ -188,7 +188,7 @@ syntax:
 		printf "$(GREEN)$(CHECK) Bash syntax valid$(RESET)\n" || \
 		(printf "$(RED)$(CROSS) Bash syntax errors found$(RESET)\n" && exit 1)
 	@printf "$(PROGRESS) Checking Ruby syntax per file...\n"
-	@for path in $(RUBY_SOURCES); do ruby -wc "$$path"; done && \
+	@for path in $(RUBY_SOURCES); do ruby -wc "$$path" || exit $$?; done && \
 		printf "$(GREEN)$(CHECK) Ruby syntax valid ($(words $(RUBY_SOURCES)) files)$(RESET)\n" || \
 		(printf "$(RED)$(CROSS) Ruby syntax errors found$(RESET)\n" && exit 1)
 
