@@ -29,6 +29,28 @@ that inference requests work.
   checks only; authorization errors, rate limits, and account endpoint failures
   do not become coding outages.
 
+## One alert scale
+
+Every vendor vocabulary maps onto the same four levels, so a colour means the same
+thing on every card, in the Waybar classes and in notifications:
+
+| Level | Colour | Statuspage (Codex, Claude) | Google Cloud (Gemini) | OpenCode |
+|---|---|---|---|---|
+| ok | green | `operational` | `AVAILABLE`, `SERVICE_INFORMATION` | `operational` |
+| degraded | amber | `degraded_performance`, `partial_outage`, `under_maintenance` | `SERVICE_DISRUPTION` | `degraded` |
+| outage | red | `major_outage` | `SERVICE_OUTAGE` | `outage` |
+| unknown | grey | missing, stale or unavailable evidence | same | same |
+
+Amber means some requests fail or run slow; red means most or all fail. Labels keep
+the vendor's wording inside a level (`Partial outage`, `Maintenance`). An active
+incident the vendor ties to no component is amber context, never dropped and never
+red. Z.ai and Ollama Cloud publish no status page and read `No status page` in grey.
+
+OpenAI's official website JSON at `https://status.openai.com/proxy/openai-1`
+supplements component health with incident associations. This is an undocumented
+website endpoint: its failure reduces incident coverage without discarding valid
+component health. All status payloads are validated, including page identity.
+
 ## Incidents and uncertainty
 
 Incidents retain stable identities, vendor updates, links, lifecycle and affected

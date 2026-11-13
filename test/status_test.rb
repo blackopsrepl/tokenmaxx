@@ -166,8 +166,10 @@ class StatusTest < Minitest::Test
     record = fetch_claude(payload)
     assert_equal "ok", record[:state]
     assert_equal ["unconfirmed", "unconfirmed"], record[:incidents].map { |i| i[:scope] }
-    assert record[:incidents].all? { |i| i[:state] == "unknown" }
+    assert record[:incidents].all? { |i| i[:state] == "degraded" }, "an unassociated incident is amber, never dropped"
     assert_nil record[:incident]
+    assert_equal "Coding operational", TokenMaxx::Core::Format.service_state_text(record)
+    assert_equal "Degraded", TokenMaxx::Core::Format.other_services_state(record).capitalize
   end
 
   def test_monitoring_operational_components_is_not_degradation
@@ -519,6 +521,31 @@ class StatusTest < Minitest::Test
     assert_equal ["Microsoft 365 connector degraded"] * 2, texts
     untitled = openai.merge(incidents: [openai[:incidents].first.merge(title: "Connector errors")])
     assert_equal "Connectors/Apps degraded", TokenMaxx::Core::Format.other_services_text(untitled)
+  end
+
+  # Every vendor vocabulary lands on one scale: amber when some requests fail or
+  # run slow, red only when most or all fail. A Statuspage partial outage and an
+  # OpenCode "degraded" plan are the same tier and must look the same.
+  def test_alert_levels_share_one_scale_across_vendors
+    statuspage = Status::STATUSPAGE_COMPONENT_STATES
+    google = Status::GOOGLE_STATES
+    opencode = Status::Opencode::STATES
+    assert_equal %w[ok ok ok], [statuspage["operational"], google["AVAILABLE"], opencode["operational"]]
+    assert_equal %w[degraded degraded degraded degraded], [statuspage["degraded_performance"], statuspage["partial_outage"], google["SERVICE_DISRUPTION"], opencode["degraded"]]
+    assert_equal %w[outage outage outage], [statuspage["major_outage"], google["SERVICE_OUTAGE"], opencode["outage"]]
+    assert_equal "ok", google["SERVICE_INFORMATION"], "an informational advisory has no impact"
+    assert_equal "degraded", statuspage["under_maintenance"]
+    assert_equal (statuspage.values + google.values + opencode.values).uniq.sort, %w[degraded ok outage]
+  end
+
+  def test_statuspage_labels_keep_vendor_wording_inside_the_amber_tier
+    record = fetch("claude")
+    degraded = ->(raw) { record.merge(state: "degraded", services: record[:services].map { |service| service.merge(state: "degraded", rawStatus: raw) }) }
+    assert_equal "Partial outage", TokenMaxx::Core::Format.service_state_text(degraded.call("partial_outage"))
+    assert_equal "Maintenance", TokenMaxx::Core::Format.service_state_text(degraded.call("under_maintenance"))
+    assert_equal "Degraded", TokenMaxx::Core::Format.service_state_text(degraded.call("degraded_performance"))
+    outage = record.merge(state: "outage", services: record[:services].map { |service| service.merge(state: "outage", rawStatus: "major_outage") })
+    assert_equal "Outage", TokenMaxx::Core::Format.service_state_text(outage)
   end
 
   def test_account_malformed_and_timeout_are_observations_not_health

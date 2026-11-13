@@ -9,13 +9,20 @@ module TokenMaxx
     module Status
       SCHEMA_VERSION = 2
       STATES = %w[ok degraded outage unknown].freeze
+      # One alert scale for every provider: ok (green), degraded (amber: some
+      # requests fail or run slow, or planned maintenance), outage (red: most or
+      # all requests fail), unknown (grey: no evidence). Statuspage's
+      # partial_outage is the same tier as OpenCode's "degraded" (a noticeable
+      # share failing) and Google's SERVICE_DISRUPTION, so it is amber; the label
+      # keeps the vendor's own wording.
       STATUSPAGE_COMPONENT_STATES = {
         "operational" => "ok", "degraded_performance" => "degraded",
-        "partial_outage" => "outage", "major_outage" => "outage",
-        "under_maintenance" => "unknown"
+        "partial_outage" => "degraded", "major_outage" => "outage",
+        "under_maintenance" => "degraded"
       }.freeze
       STATUSPAGE_INDICATORS = { "none" => "ok", "minor" => "degraded", "major" => "outage", "critical" => "outage" }.freeze
-      GOOGLE_STATES = { "AVAILABLE" => "ok", "SERVICE_INFORMATION" => "unknown", "SERVICE_DISRUPTION" => "degraded", "SERVICE_OUTAGE" => "outage" }.freeze
+      # SERVICE_INFORMATION is an advisory with no service impact.
+      GOOGLE_STATES = { "AVAILABLE" => "ok", "SERVICE_INFORMATION" => "ok", "SERVICE_DISRUPTION" => "degraded", "SERVICE_OUTAGE" => "outage" }.freeze
 
       module_function
 
@@ -249,10 +256,17 @@ module TokenMaxx
         return incident.merge(state: "unknown") unless (%w[investigating identified monitoring] + GOOGLE_STATES.keys).include?(incident[:status])
 
         coding = services.select { |s| Array(incident[:currentComponentIds]).include?(s[:id]) }
-        state = if coding.empty? && incident[:scope] == "other"
+        state = if !coding.empty?
+                  aggregate(coding)
+                elsif incident[:scope] == "other"
                   aggregate(Array(incident[:currentImpacts]))
+                elsif incident[:scope] == "unconfirmed"
+                  # An active incident the vendor tied to no component still
+                  # happened: amber, never silently dropped and never red.
+                  impact = aggregate(Array(incident[:currentImpacts]))
+                  impact == "unknown" ? "degraded" : impact
                 else
-                  coding.empty? ? "unknown" : aggregate(coding)
+                  "unknown"
                 end
         incident.merge(state: state)
       end
