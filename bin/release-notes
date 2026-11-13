@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "open3"
+
+abort "Usage: bin/release-notes vX.Y.Z" unless ARGV.length == 1 && ARGV[0].match?(/\Av\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?\z/)
+tag = ARGV.fetch(0)
+text, error, result = Open3.capture3("git", "show", "#{tag}:CHANGELOG.md")
+abort "Cannot read tagged changelog: #{error.strip}" unless result.success?
+
+version = Regexp.escape(tag.delete_prefix("v"))
+lines = text.lines
+start = lines.index { |line| line.match?(/^## \[?#{version}(?:\]|\s)/) }
+abort "No changelog section for #{tag}" unless start
+finish = ((start + 1)...lines.length).find { |index| lines[index].start_with?("## ") } || lines.length
+section = lines[start...finish].join.strip
+abort "Changelog section for #{tag} contains no release entries" unless section.match?(/^[*-] \S/)
+puts section

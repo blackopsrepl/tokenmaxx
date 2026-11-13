@@ -221,7 +221,7 @@ make check-live
 
 `make check-live` requires working live credentials for Codex, Claude, Gemini, OpenCode, Z.ai, and Ollama Cloud. Credential or upstream auth failures are release-environment blockers, not unit-test failures.
 
-Run `make help` for the full colorized target overview. `make version` prints the version from `version.env`, and `make bump-patch`, `make bump-minor`, `make bump-major` (with `make bump-dry` to preview) run `commit-and-tag-version` so releases keep using the repository's `.versionrc.js` contract.
+Run `make help` for the full colorized target overview. `make version` prints the version from `version.env`, and `make bump-patch`, `make bump-minor`, `make bump-major` (with `make bump-dry` to preview) run native `csemver` with the repository's `csemver.toml` contract.
 
 ## Documentation
 

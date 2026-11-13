@@ -28,7 +28,7 @@ BIN_DIR := $(PREFIX)/bin
 CONFIG ?= $(HOME)/.config/tokenmaxx/config.json
 SOLVERFORGE_PATH ?= $(HOME)/.local/share/solverforge
 
-RUBY_SOURCES := bin/tokenmaxx $(shell rg --files lib test -g '*.rb')
+RUBY_SOURCES := bin/tokenmaxx bin/release-notes $(shell rg --files lib test -g '*.rb')
 
 INSTALL_FILES := \
 	AGENTS.md \
@@ -247,24 +247,24 @@ version:
 
 bump-patch: banner
 	@printf "$(ARROW) Bumping patch version...\n"
-	@npx commit-and-tag-version --release-as patch && \
+	@csemver --release-as patch && \
 		printf "$(GREEN)$(CHECK) Version bumped$(RESET)\n" || \
 		(printf "$(RED)$(CROSS) Version bump failed$(RESET)\n" && exit 1)
 
 bump-minor: banner
 	@printf "$(ARROW) Bumping minor version...\n"
-	@npx commit-and-tag-version --release-as minor && \
+	@csemver --release-as minor && \
 		printf "$(GREEN)$(CHECK) Version bumped$(RESET)\n" || \
 		(printf "$(RED)$(CROSS) Version bump failed$(RESET)\n" && exit 1)
 
 bump-major: banner
 	@printf "$(ARROW) Bumping major version...\n"
-	@npx commit-and-tag-version --release-as major && \
+	@csemver --release-as major && \
 		printf "$(GREEN)$(CHECK) Version bumped$(RESET)\n" || \
 		(printf "$(RED)$(CROSS) Version bump failed$(RESET)\n" && exit 1)
 
 bump-dry:
-	@npx commit-and-tag-version --dry-run
+	@csemver --dry-run
 
 # ============== Help ==============
 

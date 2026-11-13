@@ -80,11 +80,14 @@ Provider behavior must match `lib/tokenmaxx/providers/*`.
 1. Commit the release work as atomic conventional commits (`feat`, `fix`, `docs`, ...). The changelog and version bump are derived from these commits.
 2. Re-verify and update every peak/off-peak window (see "Peak/Off-Peak Window Update" above).
 3. Run the required gates on the exact tree being released.
-4. Cut the release with the globally installed release tool. Do not use `npx`, do not hand-edit `CHANGELOG.md`, and never create the release commit or tag by hand:
+4. Cut the release with native `csemver` and the checked-in `csemver.toml`. Do not hand-edit `CHANGELOG.md`, bypass commit hooks, or create the release commit or tag by hand:
 
    ```bash
-   commit-and-tag-version --release-as vX.Y.Z
+   csemver --dry-run
+   csemver
    ```
+
+   The default bump follows Conventional Commits. For an explicit level or version, pass the same `--release-as minor` or `--release-as X.Y.Z` to the preview and cut.
 
    The tool bumps `version.env` and the Codex app-server client identity in `lib/tokenmaxx/providers/codex.rb`, regenerates `CHANGELOG.md`, creates the release commit, and tags it.
 
@@ -109,11 +112,14 @@ Provider behavior must match `lib/tokenmaxx/providers/*`.
    ```bash
    git push git.local main vX.Y.Z
    git push blackopsrepl main vX.Y.Z
-   git fetch git.local main blackopsrepl main
+   git fetch git.local main
+   git fetch blackopsrepl main
    git rev-list --left-right --count git.local/main...main     # expect: 0 0
    git rev-list --left-right --count blackopsrepl/main...main  # expect: 0 0
    git ls-remote git.local refs/tags/vX.Y.Z
    git ls-remote blackopsrepl refs/tags/vX.Y.Z
    ```
 
-Both remote tag SHAs must match the local tag object, and divergence must be `0 0` on `main` for every remote.
+Both remote tag SHAs must match the local tag object, and divergence must be `0 0` on `main` for every remote. Verify each annotated tag's peeled commit (`refs/tags/vX.Y.Z^{}`) equals the released branch head.
+
+8. Create the GitHub and Forgejo release objects from the tagged changelog, not automatic PR notes. `bin/release-notes vX.Y.Z` reads `CHANGELOG.md` from that tag and fails if the requested section is missing or has no release entries. Use its output unchanged as each release body, and read both objects back to verify their tag, title, body, and publication flags.

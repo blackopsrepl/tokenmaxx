@@ -1,0 +1,28 @@
+tagPrefix = "v"
+releaseCommitMessageFormat = "chore(release): {{currentTag}}"
+commitUrlFormat = "https://github.com/blackopsrepl/tokenmaxx/commit/{{hash}}"
+compareUrlFormat = "https://github.com/blackopsrepl/tokenmaxx/compare/{{previousTag}}...{{currentTag}}"
+issueUrlFormat = "https://github.com/blackopsrepl/tokenmaxx/issues/{{id}}"
+noBumpWhenEmptyChanges = true
+suppressRevertPairs = true
+
+types = [
+  { type = "feat", section = "Features" },
+  { type = "fix", section = "Bug Fixes" },
+  { type = "refactor", section = "Code Refactoring" },
+  { type = "perf", section = "Performance Improvements" },
+  { type = "build", section = "Build System" },
+  { type = "docs", section = "Documentation" },
+  { type = "chore", hidden = true },
+  { type = "test", hidden = true },
+  { type = "style", hidden = true },
+  { type = "ci", hidden = true }
+]
+
+packageFiles = [
+  { filename = "version.env", type = "regex", pattern = '^MARKETING_VERSION=([^[:space:]]+)', versionGroup = 1 }
+]
+bumpFiles = [
+  { filename = "version.env", type = "regex", pattern = '^MARKETING_VERSION=([^[:space:]]+)', versionGroup = 1 },
+  { filename = "lib/tokenmaxx/providers/codex.rb", type = "regex", pattern = 'initialize_client\("tokenmaxx-linux", "([^"]+)"', versionGroup = 1 }
+]
