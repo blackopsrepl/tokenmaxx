@@ -24,15 +24,25 @@ module TokenMaxx
       STATUS_METADATA = {
         "codex" => {
           source: "openai-status",
-          url: "https://status.openai.com/api/v2/summary.json",
+          url: "https://status.openai.com/api/v2/components.json",
+          enrichmentUrl: "https://status.openai.com/proxy/openai-1",
+          fallbackUrl: "https://status.openai.com/api/v2/summary.json",
+          pageId: "01JMDK9XYNY6RXSED6SDWW50WY",
           sourceUrl: "https://status.openai.com/",
-          components: ["CLI", "Codex API"]
+          services: [
+            { id: "01KMP3KP5MGE23B80K1EK4S8PV", name: "Codex API", aliases: ["Codex API"] },
+            { id: "01KMKFAMWKNQ84Z1766MV08ZDE", name: "Codex CLI", aliases: ["CLI", "Codex CLI"] }
+          ]
         },
         "claude" => {
           source: "claude-status",
           url: "https://status.claude.com/api/v2/summary.json",
           sourceUrl: "https://status.claude.com/",
-          components: ["Claude Code", "claude.ai", "Claude API", "api.anthropic.com"]
+          pageId: "tymt9n04zgry",
+          services: [
+            { id: "yyzkbfz2thpt", name: "Claude Code", aliases: ["Claude Code"] },
+            { id: "k8w3r06qmzrp", name: "Claude API", aliases: ["Claude API", "api.anthropic.com", "Claude API (api.anthropic.com)"] }
+          ]
         },
         "gemini" => {
           source: "google-cloud-status",

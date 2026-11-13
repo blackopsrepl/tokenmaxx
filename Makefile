@@ -82,6 +82,8 @@ INSTALL_FILES := \
 	lib/tokenmaxx/runtime/server.rb \
 	lib/tokenmaxx/runtime/state.rb \
 	lib/tokenmaxx/runtime/status.rb \
+	lib/tokenmaxx/runtime/status/claude.rb \
+	lib/tokenmaxx/runtime/status/openai.rb \
 	lib/tokenmaxx/runtime/storage.rb \
 	lib/tokenmaxx/runtime/swaybar.rb \
 	lib/tokenmaxx/runtime/usage.rb \
