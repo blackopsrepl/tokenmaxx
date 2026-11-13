@@ -231,6 +231,6 @@ Run `make help` for the full colorized target overview. `make version` prints th
 - `docs/runtime-contracts.md`: config, snapshot, UI, and Waybar JSON contracts.
 - `docs/architecture.md`: runtime architecture.
 - `docs/providers.md`: implemented provider fetch paths.
-- `docs/status.md`: external service-status cache behavior.
+- `docs/status.md`: scoped coding-service health, other provider incidents, separate account checks, and evidence freshness.
 - `docs/cli.md`: command reference.
 - `docs/RELEASING.md`: release gates.

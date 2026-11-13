@@ -3,6 +3,15 @@
 require_relative "test_helper"
 
 class QuickShellTest < Minitest::Test
+  def test_scoped_service_surface_is_plain_accessible_and_clock_expiring
+    qml = File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
+    ["Coding services", "Account check", "Incident list incomplete or unavailable", "Retained incidents are stale context", "Accessible.name: \"Open vendor incident:", "textFormat: Text.PlainText", "function serviceExpired", "root.openServiceDetail(modelData)", "Expand update"].each do |text|
+      assert_includes qml, text
+    end
+    assert_includes qml, "model: serviceSection.service ? serviceSection.service.groups : []"
+    refute_includes qml, "text: modelData.serviceStatusText"
+  end
+
   def test_ui_adapter_only_writes_ui_state_on_explicit_actions
     qml = File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
 
@@ -58,7 +67,7 @@ class QuickShellTest < Minitest::Test
   def test_peak_row_labels_can_shrink_below_their_text_width
     qml = File.read(File.expand_path("../frontend/quickshell/shell.qml", __dir__))
 
-    rows = qml.scan(/Layout\.fillWidth: true\n\s+Layout\.minimumWidth: 0\n(?:\s+.*\n)*?\s+elide: Text\.ElideRight/)
+    rows = qml.scan(/Layout\.fillWidth: true\n\s+Layout\.minimumWidth: 0\n(?:\s+[^{}\n]*\n)*?\s+elide: Text\.ElideRight/)
 
     assert_equal 2, rows.length,
                  "the label before a peak marker must elide instead of pushing the marker off the row"

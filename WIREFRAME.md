@@ -95,7 +95,7 @@ The QuickShell panel has four views:
 - History: presenter-rendered retained daily history for the focused provider, including a token usage heatmap (week-aligned day grid with a single fill ramp for daily local token totals and inline usage stats) and per-model quota for model-meter providers; days with no quota sample or local usage are omitted and the view falls back to its empty state.
 - Settings: cadence, display, notification, privacy, scan, and cache-clear controls.
 
-The QuickShell panel is a modal overlay. It stays above application windows, ignores layer-shell exclusion, and uses a relaxed vertical footprint with scrolling where detail content exceeds the available height. Its input mask covers the modal frame only, so clicks outside the card pass through to the desktop instead of dismissing the panel; it closes with its close button or Escape. The provider rail scrolls so every configured provider stays selectable, screens shorter than 820 panel pixels switch to a dense layout instead of squeezing the content area, and under the narrow 720 pixel breakpoint the fixed provider rail and detail action rail drop out so the detail column keeps a readable width. Peak badges resolve live from the compiled schedule timelines and fall back to the static peak fields in a snapshot that carries no timeline.
+The QuickShell panel is a bounded bar drop-down. It stays above application windows, ignores layer-shell exclusion, and uses a relaxed vertical footprint with scrolling where detail content exceeds the available height. Its surface covers the card rect only, so clicks outside the card pass through to the desktop instead of dismissing the panel; it closes with its close button or Escape. The provider rail scrolls so every configured provider stays selectable, screens shorter than 820 panel pixels switch to a dense layout instead of squeezing the content area, and under the narrow 720 pixel breakpoint the fixed provider rail and detail action rail drop out so the detail column keeps a readable width. Peak badges resolve live from the compiled schedule timelines and fall back to the static peak fields in a snapshot that carries no timeline.
 
 Waybar is intentionally smaller than the modal: it renders provider icon, quota percentages, provider/display classes, health classes, and tooltip detail. It does not render pace/reserve/hot text or pace classes.
 
@@ -188,3 +188,31 @@ Release cutting, deployment, and publication to both remotes follow the step-by-
 - no provider fetches from local server request handlers
 - no synchronous provider quota fetches from provider state toggles
 - no broad install copy of the development checkout
+
+## Scoped status on the existing surfaces
+
+Overview keeps quota severity and its meter colors independent from coding status.
+A separate coding line uses vendor-reported scoped evidence; other-service incidents
+and unconfirmed scope stay neutral context. Opening a card focuses the existing
+Provider Detail coding section, without adding a tab.
+
+Provider Detail shows **Coding services** with individual tracked service rows,
+raw vendor states, last successful retrieval and last attempt, freshness and coverage,
+and vendor/source links. Incidents are grouped as **Affects coding**, **Other services**,
+and **Scope unconfirmed**; mixed incidents appear once under coding with both scope
+memberships. Titles and latest updates are plain text, long updates expand inline,
+and incident links are keyboard-accessible buttons restricted to HTTPS vendor hosts.
+An incomplete incident list never says no incidents. Vendor-wide context is not coding
+health. **Account check** is separate: authentication, quota endpoint failures and
+successful account reads do not establish inference health.
+
+The presenter applies backend status expiration when consuming cached data; the panel
+also compares `staleAt` against its clock, so stopped refreshes cannot remain green.
+Unknown/stale evidence is neutral, and retained stale incidents are context rather than
+fresh alerts. Legacy unscoped records await a scoped refresh. The existing scheduler
+still owns refresh timing; no independent status deadline or inference probe is implied.
+
+Waybar text remains quota-only. Its escaped tooltip includes scoped status, freshness,
+coverage and concise other/unconfirmed incident context. `service-degraded` and
+`service-outage` classes require fresh confirmed coding impact, independently of quota
+warning/critical classes. QML and Waybar perform no status network requests.
