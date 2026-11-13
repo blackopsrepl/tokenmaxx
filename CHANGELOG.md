@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.6.1](https://github.com/blackopsrepl/tokenmaxx/compare/v2.6.0...v2.6.1) (2026-11-13)
+
+
+### Features
+
+* **status:** report coding health for Gemini and OpenCode Go from vendor status sources ([89fb274](https://github.com/blackopsrepl/tokenmaxx/commit/89fb274a84502e37512faf1d41337fd66fdf51c8))
+
+
+### Bug Fixes
+
+* **panel:** collapse service status to one line and name the affected other services ([d53255a](https://github.com/blackopsrepl/tokenmaxx/commit/d53255a895db4474d2f7447ddc1527298876787f))
+* **status:** put every vendor on one alert scale ([d710eb2](https://github.com/blackopsrepl/tokenmaxx/commit/d710eb287708c04a362427dc02ac809cec444a34))
+
+
 ## [2.6.0](https://github.com/blackopsrepl/tokenmaxx/compare/v2.5.3...v2.6.0) (2026-11-13)
 
 
