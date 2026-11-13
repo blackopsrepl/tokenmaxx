@@ -7,7 +7,7 @@ require "time"
 module TokenMaxx
   module Runtime
     module State
-      SNAPSHOT_VERSION = 3
+      SNAPSHOT_VERSION = 4
       SNAPSHOT_FILE = "snapshot.json"
       UI_STATE_FILE = "ui.json"
       STATUS_FILE = "status.json"
@@ -79,7 +79,7 @@ module TokenMaxx
           autoSelectableProviders: Usage.auto_selectable_providers(config, enabled),
           selectedProvider: Usage.selected_provider(config, enabled),
           displayProvider: Usage.display_provider(config, enabled, results),
-          serviceStatus: service_status || read_status(config),
+          serviceStatus: status_payload(config, payload: service_status || read_status(config), now: now),
           localUsage: local_usage || read_local_usage(config),
           storage: storage || read_storage(config),
           history: history || read_history(config),
@@ -138,7 +138,24 @@ module TokenMaxx
       end
 
       def read_status(config)
-        read_json_file(status_path(config)) || {}
+        payload = read_json_file(status_path(config))
+        payload.is_a?(Hash) ? payload : {}
+      end
+
+      def status_payload(config, payload: nil, now: Time.now.utc)
+        payload ||= read_status(config)
+        payload = {} unless payload.is_a?(Hash)
+        providers = payload[:providers].is_a?(Hash) ? payload[:providers] : {}
+        payload.merge(providers: providers.to_h do |provider, record|
+          [provider, Status.for_display(record, refresh_seconds: config.dig(:status, :refreshSeconds), now: now)]
+        end)
+      end
+
+      def snapshot_for_display(config, snapshot, now = Time.now.utc)
+        return {} unless snapshot
+
+        projected = snapshot.merge(serviceStatus: status_payload(config, payload: snapshot[:serviceStatus] || {}, now: now))
+        projected.merge(view: Presenter.build_snapshot_view(config, projected, now))
       end
 
       def write_status(config, payload)

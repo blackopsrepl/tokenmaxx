@@ -273,7 +273,7 @@ module TokenMaxx
         Runtime::State.rebuild_snapshot(config)
         Runtime::Daemon.signal_waybar(config)
       end
-      print_payload(payload, args)
+      print_payload(Runtime::State.status_payload(config, payload: payload), args)
       0
     end
 

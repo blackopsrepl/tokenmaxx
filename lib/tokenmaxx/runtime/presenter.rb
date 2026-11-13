@@ -2,6 +2,7 @@
 
 require "date"
 require "time"
+require "uri"
 
 module TokenMaxx
   module Runtime
@@ -87,7 +88,7 @@ module TokenMaxx
         classes << "manual-refresh" if config.dig(:runtime, :refreshMode) == "manual"
         classes << "notifications-on" if config.dig(:notifications, :enabled)
         classes << "privacy-on" if config.dig(:privacy, :hidePersonalInfo)
-        classes << "service-#{display_view[:serviceState]}" if display_view && %w[degraded outage].include?(display_view[:serviceState].to_s)
+        classes << "service-#{display_view[:serviceState]}" if display_view && display_view.dig(:service, :freshness) == "fresh" && %w[degraded outage].include?(display_view[:serviceState].to_s)
         classes.concat(result_classes(config, display_provider, result, results))
 
         {
@@ -101,7 +102,8 @@ module TokenMaxx
       def build_provider_view(config, snapshot, provider, result, now)
         state = Usage.provider_state(config, provider) || {}
         usage = result && result[:usage]
-        service_status = auxiliary_provider(snapshot[:serviceStatus], provider)
+        service_status = Status.for_display(auxiliary_provider(snapshot[:serviceStatus], provider),
+          refresh_seconds: config.dig(:status, :refreshSeconds), now: now)
         local_usage = auxiliary_provider(snapshot[:localUsage], provider)
         storage = auxiliary_provider(snapshot[:storage], provider)
         history = auxiliary_provider(snapshot[:history], provider)
@@ -118,10 +120,10 @@ module TokenMaxx
         error = clean(result && result[:error])
         notes = Array(result && result[:notes]).filter_map { |note| clean(note) }
         identity = usage && usage[:identity] || {}
-        status = provider_status(result, dominant_metric, actual_metrics, stale, service_status)
+        status = provider_status(result, dominant_metric, actual_metrics, stale)
         metadata = Core::Types::PROVIDER_METADATA.fetch(provider)
         chip_text = chip_text(config, provider, result)
-        incident = clean(result && result[:incident]) || service_incident(service_status)
+        incident = nil # Service incidents are scoped evidence, never quota/provider notes.
         peak = provider_peak(provider, usage, actual_metrics, local_usage, now)
 
         {
@@ -151,13 +153,14 @@ module TokenMaxx
           quotaSummaryText: quota_summary_text(config, provider, actual_metrics, unavailable_metrics),
           secondaryMetrics: actual_metrics.reject { |entry| dominant_metric && entry[:key] == dominant_metric[:key] },
           hero: hero_view(config, provider, usage, dominant_metric, now),
-          detailCards: provider_detail_cards(config, provider, result, usage, dominant_metric, actual_metrics, now, service_status, local_usage, storage, history, peak),
+          detailCards: provider_detail_cards(config, provider, result, usage, dominant_metric, actual_metrics, now, local_usage, storage, history, peak),
           creditsText: result && result[:credits] ? Core::Format.credits_string(result[:credits]) : nil,
           providerCostText: provider_cost_text(usage),
           spendLines: spend_lines(usage),
           identityText: identity_text(identity, config.dig(:privacy, :hidePersonalInfo)),
           accountEmail: clean(identity[:accountEmail]),
           loginMethod: clean(identity[:loginMethod]),
+          service: scoped_service_view(provider, service_status),
           serviceState: clean(service_status[:state]) || "unknown",
           serviceStatusText: Core::Format.service_status_text(service_status),
           serviceStatusUpdatedAt: clean(service_status[:updatedAt]),
@@ -257,7 +260,7 @@ module TokenMaxx
         end
       end
 
-      def provider_detail_cards(config, provider, result, usage, dominant_metric, metrics, now, service_status = nil, local_usage = nil, storage = nil, history = nil, peak = nil)
+      def provider_detail_cards(config, provider, result, usage, dominant_metric, metrics, now, local_usage = nil, storage = nil, history = nil, peak = nil)
         cards = unavailable_metric_views(provider, usage).map do |entry|
           {
             key: "#{entry[:key]}-unavailable",
@@ -272,7 +275,6 @@ module TokenMaxx
           .map { |entry| metric_card_view(config, entry, now) })
         peak_tile = peak_card(peak)
         cards << peak_tile if peak_tile
-        cards << service_status_card(service_status) if service_status && !service_status.empty?
         cards.concat(spend_card_views(config, usage, now))
         local_card = local_usage_card(local_usage)
         cards << local_card if local_card
@@ -319,13 +321,57 @@ module TokenMaxx
         }
       end
 
-      def service_status_card(service_status)
+      # Links are vendor-owned HTTPS only; never turn arbitrary feed URLs into actions.
+      STATUS_HOSTS = {
+        "codex" => %w[status.openai.com], "claude" => %w[status.claude.com status.anthropic.com],
+        "gemini" => %w[aistudio.google.com status.cloud.google.com status.ai.google],
+        "opencode" => %w[opencode.ai], "zai" => %w[status.z.ai], "ollama" => %w[status.ollama.com ollama.com]
+      }.freeze
+
+      def status_link(provider, value)
+        uri = URI.parse(value.to_s)
+        return nil unless uri.is_a?(URI::HTTPS) && uri.userinfo.nil? && uri.port == 443
+        return nil unless STATUS_HOSTS.fetch(provider, []).include?(uri.host)
+        return nil if value.to_s.match?(/[\s\x00-\x1f]/)
+
+        uri.to_s
+      rescue URI::InvalidURIError
+        nil
+      end
+
+      def scoped_service_view(provider, record)
+        freshness = record[:freshness].to_s
+        incidents = Array(record[:incidents]).sort_by do |incident|
+          [{ "coding" => 0, "mixed" => 0, "other" => 1 }.fetch(incident[:scope].to_s, 2),
+           { "outage" => 0, "critical" => 0, "major" => 0, "degraded" => 1 }.fetch(incident[:severity].to_s, 2),
+           -(parse_time(incident[:updatedAt])&.to_i || 0), incident[:id].to_s]
+        end.map do |incident|
+          incident.merge(url: status_link(provider, incident[:url]),
+            scopeText: { "mixed" => "Coding + other services", "coding" => "Coding services", "other" => "Other services" }.fetch(incident[:scope].to_s, "Scope unconfirmed"),
+            impactText: { "ok" => "Operational", "degraded" => "Degraded", "outage" => "Outage" }.fetch(incident[:state].to_s, "Impact unconfirmed"),
+            affectedText: Array(incident[:affectedServices]).map { |entry| entry.is_a?(Hash) ? entry[:name] : entry }.compact.join(", "))
+        end
+        groups = [["Affects coding", %w[coding mixed]], ["Other services", %w[other]], ["Scope unconfirmed", %w[unconfirmed unknown]]].filter_map do |label, scopes|
+          entries = incidents.select { |incident| scopes.include?(incident[:scope].to_s) || (label == "Scope unconfirmed" && !%w[coding mixed other].include?(incident[:scope].to_s)) }
+          { label: label, incidents: entries } unless entries.empty?
+        end
+        other = incidents.count { |incident| incident[:scope].to_s == "other" }
+        unconfirmed = incidents.count { |incident| !%w[coding mixed other].include?(incident[:scope].to_s) }
+        context = []
+        context << "#{other} other-service incident#{other == 1 ? '' : 's'}" if other.positive?
+        context << "#{unconfirmed} scope unconfirmed" if unconfirmed.positive?
+        context << "Retained incident context not fresh" if incidents.any? { |incident| incident[:freshness] != "fresh" }
+        coverage = record[:incidentCoverage].to_s
+        context << "Incident coverage #{coverage.empty? ? 'unavailable' : coverage}" unless coverage == "complete"
         {
-          key: "service-status",
-          icon: service_status[:state].to_s == "ok" ? "" : "󰀨",
-          label: "Service",
-          value: service_status[:state].to_s.empty? ? "unknown" : service_status[:state].to_s,
-          detail: Core::Format.service_status_text(service_status)
+          state: record[:state] || "unknown", summary: Core::Format.service_status_text(record),
+          freshness: freshness, staleAt: record[:staleAt], lastKnownState: record[:lastKnownState],
+          coverage: record[:coverage] || "unavailable", incidentCoverage: coverage, incidentStaleAt: record[:incidentStaleAt],
+          checkedAt: record[:checkedAt], updatedAt: record[:updatedAt], error: record[:error],
+          context: context.join(" · "), services: Array(record[:services]), groups: groups,
+          sourceUrl: status_link(provider, record[:sourceUrl] || record.dig(:vendor, :sourceUrl)),
+          vendorText: record.dig(:vendor, :description), observation: record[:observation],
+          sources: Array(record[:sources]).map { |source| source.merge(url: status_link(provider, source[:url] || source[:sourceUrl])) }
         }
       end
 
@@ -946,9 +992,16 @@ module TokenMaxx
           result = results[provider] || results[provider.to_sym]
           prefix = provider == display_provider ? "*" : " "
           lines << "#{prefix} #{tooltip_provider_line(config, provider, provider_view, result)}"
+          service = provider_view && provider_view[:service]
+          if service
+            lines << "  #{service[:summary]} · #{service[:freshness]} · coverage #{service[:coverage]}"
+            lines << "  #{service[:context]}" unless service[:context].empty?
+            observation = service[:observation]
+            lines << "  Account check: #{[observation[:description], observation[:error]].compact.uniq.join(' · ')}" if observation
+          end
         end
 
-        lines.compact
+        lines.compact.map { |line| Core::Format.escape_markup(line) }
       end
 
       def tooltip_provider_line(config, provider, provider_view, result)
@@ -1067,11 +1120,9 @@ module TokenMaxx
         classes
       end
 
-      def provider_status(result, dominant_metric, metrics, stale, service_status = nil)
+      def provider_status(result, dominant_metric, metrics, stale)
         return "loading" unless result
         return "error" if result[:error] && !result[:usage]
-        return "incident" if %w[degraded outage].include?(service_status && service_status[:state].to_s)
-        return "incident" if clean(result[:incident])
         return "stale" if stale
 
         provider_quota_status(dominant_metric, metrics)
@@ -1082,13 +1133,6 @@ module TokenMaxx
         return {} unless providers
 
         providers[provider] || providers[provider.to_sym] || {}
-      end
-
-      def service_incident(service_status)
-        return nil unless service_status
-        return nil unless %w[degraded outage].include?(service_status[:state].to_s)
-
-        clean(service_status[:incident]) || clean(service_status[:description])
       end
 
       def local_usage_summary(local_usage)

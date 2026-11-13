@@ -105,7 +105,12 @@ class CliTest < Minitest::Test
       fresh_status = {
         generatedAt: now.iso8601,
         providers: {
-          "codex" => { provider: "codex", state: "ok", description: "All Systems Operational", updatedAt: now.iso8601 }
+          "codex" => {
+            schemaVersion: 2, provider: "codex", scope: "coding", state: "ok", coverage: "complete",
+            freshness: "fresh", description: "Coding services operational", updatedAt: now.iso8601,
+            services: [{ id: "api", name: "Codex API", state: "ok", checkedAt: now.iso8601 }],
+            incidents: [], incidentCoverage: "complete", sources: []
+          }
         }
       }
 
@@ -124,7 +129,7 @@ class CliTest < Minitest::Test
       codex = rebuilt.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
       assert TokenMaxx::Runtime::State.result_for(rebuilt, "codex")[:usage]
       assert_equal "ok", codex[:serviceState]
-      assert_equal "All Systems Operational", codex[:serviceStatusText]
+      assert_equal "Coding services operational", codex[:serviceStatusText]
     end
   end
 

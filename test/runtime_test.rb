@@ -3,6 +3,79 @@
 require_relative "test_helper"
 
 class RuntimeTest < Minitest::Test
+  def scoped_status(now, state: "ok", description: nil, **fields)
+    { schemaVersion: 2, state: state, scope: "coding", description: description,
+      coverage: "complete", incidentCoverage: "complete", freshness: "fresh",
+      updatedAt: now.iso8601, checkedAt: now.iso8601, staleAt: (now + 600).iso8601,
+      services: [{ id: "cli", name: "Codex CLI", scope: "coding", state: state, rawStatus: state }], incidents: [] }.merge(fields)
+  end
+
+  def test_scoped_presentation_preserves_quota_and_groups_context_once
+    now = Time.now.utc
+    config = with_provider_state(build_config, "codex", enabled: true, visible: true)
+    config = TokenMaxx::Core::Config.set_selected_provider(config, "codex")
+    results = { "codex" => provider_result(provider: "codex", usage: usage_payload(provider: "codex", now: now,
+      primary: window(used_percent: 95, window_minutes: 300, now: now, resets_in_minutes: 240))) }
+    incidents = [
+      { id: "mixed", state: "unknown", title: "<b>Impact & update</b>", scope: "mixed", status: "monitoring", affectedServices: ["Codex CLI", "Apps"], url: "https://status.openai.com/incidents/mixed", updateText: "x" * 900 },
+      { id: "other", state: "unknown", title: "Connector", scope: "other", url: "https://evil.example/" },
+      { id: "unknown", state: "unknown", title: "Unknown scope", scope: "unconfirmed" }
+    ]
+    record = scoped_status(now, state: "outage", incidents: incidents)
+    snapshot = TokenMaxx::Runtime::State.build_snapshot(config, ["codex"], results, now, service_status: { schemaVersion: 2, providers: { "codex" => record } })
+    view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
+    assert_equal "critical", view[:status]
+    assert_nil view[:incident]
+    assert_equal ["Affects coding", "Other services", "Scope unconfirmed"], view[:service][:groups].map { |group| group[:label] }
+    assert_equal 3, view[:service][:groups].sum { |group| group[:incidents].length }
+    assert_nil view[:service][:groups][1][:incidents][0][:url]
+    assert_equal 900, view[:service][:groups][0][:incidents][0][:updateText].length
+    assert_includes snapshot.dig(:view, :chip, :classes), "service-outage"
+    expired = TokenMaxx::Runtime::Presenter.build_snapshot_view(config, snapshot, now + 601)
+    refute_includes expired.dig(:chip, :classes), "service-outage"
+    assert_equal "unknown", expired[:providers].find { |entry| entry[:id] == "codex" }[:serviceState]
+  end
+
+  def test_other_incidents_and_account_errors_are_not_coding_alerts
+    now = Time.now.utc
+    config = with_provider_state(build_config, "codex", enabled: true, visible: true)
+    config = TokenMaxx::Core::Config.set_selected_provider(config, "codex")
+    results = { "codex" => provider_result(provider: "codex", usage: usage_payload(provider: "codex", now: now,
+      primary: window(used_percent: 5, window_minutes: 300, now: now, resets_in_minutes: 240))) }
+    record = scoped_status(now, description: "Coding <operational> & confirmed", incidents: [{ id: "m365", state: "unknown", scope: "other", title: "M365 outage", checkedAt: now.iso8601 }],
+      observation: {state: "error", description: "Account <401> & failure"})
+    snapshot = TokenMaxx::Runtime::State.build_snapshot(config, ["codex"], results, now, service_status: {schemaVersion: 2, providers: {"codex" => record}})
+    view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
+    assert_equal "healthy", view[:status]
+    assert_equal "ok", view[:serviceState]
+    assert_nil view[:incident]
+    payload = TokenMaxx::Runtime::Waybar.payload(config, snapshot, now)
+    refute_includes payload[:class], "service-outage"
+    refute_includes payload[:class], "service-degraded"
+    assert_includes payload[:tooltip], "Coding &lt;operational&gt; &amp; confirmed"
+    assert_includes payload[:tooltip], "1 other-service incident"
+    assert_includes payload[:tooltip], "Account &lt;401&gt; &amp; failure"
+    assert_equal "󰚩 95%", payload[:text]
+  end
+
+  def test_scoped_links_and_markup_are_safe
+    presenter = TokenMaxx::Runtime::Presenter
+    %w[http://status.openai.com/x https://status.openai.com.evil.test/x https://evil@status.openai.com/x javascript:alert(1) https://status.openai.com:444/x].each do |url|
+      assert_nil presenter.status_link("codex", url)
+    end
+    assert_equal "https://status.openai.com/incidents/1", presenter.status_link("codex", "https://status.openai.com/incidents/1")
+    assert_equal "&lt;b&gt;&amp;&quot;&apos;", TokenMaxx::Core::Format.escape_markup("<b>&\"'")
+  end
+
+  def test_legacy_status_cannot_establish_scoped_impact
+    now = Time.now.utc
+    config = build_config
+    snapshot = { generatedAt: now.iso8601, results: {}, serviceStatus: { providers: { "codex" => { state: "outage", description: "Legacy global" } } } }
+    view = TokenMaxx::Runtime::Presenter.build_snapshot_view(config, snapshot, now)[:providers].find { |entry| entry[:id] == "codex" }
+    assert_equal "unknown", view[:serviceState]
+    refute_includes view[:serviceStatusText], "Legacy global"
+  end
+
   def test_build_snapshot_generates_view_counts_and_provider_badges
     now = Time.now.utc
     config = build_config
@@ -31,8 +104,8 @@ class RuntimeTest < Minitest::Test
     service_status = {
       generatedAt: now.iso8601,
       providers: {
-        "codex" => { state: "ok", description: "Service operational", updatedAt: now.iso8601 },
-        "claude" => { state: "degraded", description: "Claude Code degraded", updatedAt: now.iso8601 }
+        "codex" => scoped_status(now, state: "ok", description: "Coding services vendor-reported operational"),
+        "claude" => scoped_status(now, state: "degraded", description: "Claude Code degraded")
       }
     }
     history = {
@@ -56,7 +129,7 @@ class RuntimeTest < Minitest::Test
     codex_view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "codex" }
     claude_view = snapshot.dig(:view, :providers).find { |entry| entry[:id] == "claude" }
 
-    assert_equal 3, snapshot[:snapshotVersion]
+    assert_equal 4, snapshot[:snapshotVersion]
     assert_equal %w[codex claude], snapshot[:enabledProviders]
     assert_equal %w[codex], snapshot[:visibleProviders]
     assert_equal %w[claude], snapshot[:hiddenProviders]
@@ -67,7 +140,7 @@ class RuntimeTest < Minitest::Test
     assert_includes codex_view[:badges], "display"
     assert_includes claude_view[:badges], "hidden"
     assert_equal "error", claude_view[:status]
-    assert_equal "Service operational", codex_view[:serviceStatusText]
+    assert_equal "Coding services vendor-reported operational", codex_view[:serviceStatusText]
     assert_equal "1 retained days / 12.3k local tokens / 42% peak quota", codex_view[:historySummary]
     assert_equal 42.0, codex_view[:historyDays].first[:barPercent]
     assert_equal "12.3k tok / 7 records", codex_view[:historyDays].first[:detail]
@@ -434,7 +507,7 @@ class RuntimeTest < Minitest::Test
     }
     service_status = {
       providers: {
-        "codex" => { state: "outage", description: "Codex API outage", updatedAt: now.iso8601 }
+        "codex" => scoped_status(now, state: "outage", description: "Codex API outage")
       }
     }
 

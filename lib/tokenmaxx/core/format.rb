@@ -88,20 +88,23 @@ module TokenMaxx
         "#{format('%.1f', amount).sub('.0', '')} #{units[index]}"
       end
 
-      def service_status_text(status)
-        return "Status unknown" unless status
+      def escape_markup(value)
+        value.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'", "&apos;")
+      end
 
-        state = status[:state].to_s
+      # The caller must first apply Status.for_display, including expiration.
+      def service_status_text(status)
+        return "Coding status unknown" unless status
+        return "Coding status stale (last known #{status[:lastKnownState] || 'unknown'})" if status[:freshness] == "stale"
+
         description = clean(status[:description])
-        case state
-        when "ok"
-          description || "Service operational"
-        when "degraded"
-          description || "Service degraded"
-        when "outage"
-          description || "Service outage"
-        else
-          description || "Status unknown"
+        return description if description
+
+        case status[:state].to_s
+        when "ok" then "Coding services vendor-reported operational"
+        when "degraded" then "Coding services degraded"
+        when "outage" then "Coding services outage"
+        else "Coding status unknown"
         end
       end
 

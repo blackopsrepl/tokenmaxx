@@ -44,7 +44,7 @@ Current shape:
 
 ```json
 {
-  "snapshotVersion": 3,
+  "snapshotVersion": 4,
   "generatedAt": "2026-05-06T00:00:00Z",
   "enabledProviders": ["codex"],
   "visibleProviders": ["codex"],
@@ -72,11 +72,34 @@ When a provider refresh fails after a successful sample, the daemon retains that
 
 All files live under `runtime.stateDir`, are owned by Ruby, and are written with `0600` permissions:
 
-- `status.json`: current external service state for Codex/OpenAI, Claude, and Gemini/Google Cloud.
+- `status.json`: schema version 2 scoped vendor status, incident associations, source coverage/freshness and separate account observations for all six supported providers. Provider `state` is scoped, never the vendor-global indicator. See [Status](status.md).
 - `local_usage.json`: exact local token/cost summaries from Codex and Claude logs plus Gemini CLI chat token summaries and OpenCode usage database summaries. Every provider summary can include a `models` map keyed by model id: Codex uses the session `turn_context` model, Claude the record `message.model`, and Gemini and OpenCode the source model id. Z.ai entries summarize Z.ai-routed assistant messages (`providerID` `zai-coding-plan`/`zai`) from the OpenCode usage database, Ollama Cloud entries summarize only assistant messages with `providerID` `ollama-cloud`, and OpenCode Go entries summarize only assistant messages with `providerID` `opencode-go`, so Z.ai and Ollama Cloud rows and other harness-routed providers are never attributed to OpenCode Go. Every provider summary also carries `sources`, the list of stores it covers (`codex-jsonl`, `claude-jsonl`, `gemini-jsonl`, `opencode-db`, and `hermes` when the Hermes usage database is readable and the provider is not excluded): a provider driven through Hermes is merged from `~/.hermes/state.db`'s `session_model_usage` rows on top of its CLI store, attributed by Hermes provider id through the mapping in `docs/providers.md`, so the two clients sum into one provider's totals, model rows, and days. The payload also carries `hermes` with `available`, `dbPath`, `note` (read failures), and `unattributedProviders` (records and tokens per Hermes provider id that deliberately maps to no TokenMaxx provider).
 - `history.json`: daily retained quota/local-usage summaries. Window providers keep primary/secondary/tertiary samples; Gemini meter providers keep per-model quota in `modelQuota` and model usage in `modelUsage` keyed by raw model id without synthesizing window lanes. Local-usage fields (tokens, records, cost, `modelUsage`) are re-merged from the current scan window on every update, so a corrected local scanner repairs already-retained days. Days with neither a quota sample nor local usage are omitted from the presenter's `historyDays`, so a provider with no samples yields the History empty state.
 - `storage.json`: optional provider storage footprint summaries.
 - `notification_state.json`: last notification state to prevent repeated alerts.
+
+## Scoped Service Status
+
+The status envelope has `schemaVersion: 2`, `generatedAt`, and `providers`.
+Each provider carries `state`, `scope`, `description`, `coverage`, `services[]`,
+`incidents[]`, `incidentCoverage`, contextual `vendor`, optional account
+`observation`, and source metadata. Services preserve component identities and
+raw status; incidents preserve identity, current impact, lifecycle, scope,
+affected services, vendor update, update text and source link. Multiple incidents
+are retained; unassociated incidents have unconfirmed scope.
+
+`updatedAt` is the last successful health observation, `checkedAt` the attempt,
+and `staleAt` the expiration. `sources[]` preserves each source's retrieval and
+vendor-update timestamps, coverage and error independently. `freshness` is
+`fresh`, `stale`, or `unavailable`; stale display becomes `unknown` and retains
+`lastKnownState`. A fresh snapshot is not proof of fresh status. Cached CLI and
+localhost reads project expiration without writing or fetching. QuickShell reads
+the presenter projection and may evaluate its supplied expiration against a
+clock; no incident classification lives in QML.
+
+Snapshot version 4 changes service-state semantics: coding status is not a global
+vendor indicator, and account observations are not inference health. Old unscoped
+status records display unknown until refreshed; quota and history remain intact.
 
 ## UI State
 

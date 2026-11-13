@@ -68,9 +68,9 @@ module TokenMaxx
         when "/health"
           health_payload(config)
         when "/usage"
-          State.read_snapshot(config) || {}
+          State.snapshot_for_display(config, State.read_snapshot(config))
         when "/status"
-          State.read_status(config)
+          State.status_payload(config)
         when "/cost"
           State.read_local_usage(config)
         when "/history"
