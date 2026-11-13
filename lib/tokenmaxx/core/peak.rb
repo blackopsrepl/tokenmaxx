@@ -45,16 +45,16 @@ module TokenMaxx
         {
           id: "ollama:deepseek",
           provider: "ollama",
-          model: /\Adeepseek-/,
+          model: /\Adeepseek-(?:v4\.1-flash|v4-pro)(?::(?:\d+-)?cloud)?\z/,
           peak: [[WEEKDAYS, 720, 1080]],
-          detail: "Ollama Cloud off-peak pricing applies outside Mon-Fri 12:00-18:00 UTC."
+          detail: "Ollama Cloud DeepSeek V4.1 Flash and V4 Pro off-peak pricing applies outside Mon-Fri 12:00-18:00 UTC."
         },
         {
           id: "opencode:deepseek",
           provider: "opencode",
-          model: /\Adeepseek-/,
+          model: /\Adeepseek-(?:v4\.1-flash|v4-pro)\z/,
           peak: [[WEEKDAYS, 60, 240], [WEEKDAYS, 360, 600]],
-          detail: "DeepSeek peaks Mon-Fri 01:00-04:00 and 06:00-10:00 UTC; all other hours are off-peak."
+          detail: "DeepSeek V4.1 Flash and V4 Pro peak Mon-Fri 01:00-04:00 and 06:00-10:00 UTC; all other hours are off-peak."
         }
       ].freeze
 

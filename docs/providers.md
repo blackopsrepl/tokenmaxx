@@ -128,12 +128,12 @@ Some providers bill by time of day. TokenMaxx labels the current period per mode
 | Provider | Time-priced models | Peak window (UTC) | Off-peak |
 | --- | --- | --- | --- |
 | Z.ai GLM Coding Plan | all models | Mon-Fri 14:00-18:00 UTC+8 (`06:00-10:00` UTC) | 50% credit consumption |
-| Ollama Cloud | `deepseek-*` only | Mon-Fri 12:00-18:00 | outside the window, all weekend |
-| OpenCode Go | `deepseek-*` only | Mon-Fri 01:00-04:00 and 06:00-10:00 | outside the windows, all weekend |
+| Ollama Cloud | `deepseek-v4.1-flash`, `deepseek-v4-pro` (including cloud tags) | Mon-Fri 12:00-18:00 | outside the window, all weekend |
+| OpenCode Go | `deepseek-v4.1-flash`, `deepseek-v4-pro` | Mon-Fri 01:00-04:00 and 06:00-10:00 | outside the windows, all weekend |
 
 Providers without time-of-day pricing (`codex`, `claude`, `gemini`) and models without a schedule (for example `opencode`'s Kimi, GLM, or Qwen models, or any non-DeepSeek Ollama Cloud model) report no peak state rather than a guess. The state appears as a badge on Overview cards and Provider Detail, a peak card in the detail grid, a per-model marker on local usage rows and model metrics, and a suffix in the Waybar tooltip; the tooltip and detail card also show the current window in the machine's local zone. Peak never appears in the compact Waybar text or CSS classes.
 
-Only the standing recurring schedules are encoded; limited-time vendor promotions are intentionally not tracked, because a hardcoded promotion would keep reporting a discount after it expired. When a vendor changes a standing schedule, update `Core::Peak::SCHEDULES` and this table together.
+Only the standing recurring schedules are encoded; limited-time vendor promotions are intentionally not tracked, because a hardcoded promotion would keep reporting a discount after it expired. The sources are [Z.ai Coding Plan usage](https://docs.z.ai/devpack/overview), [Ollama model pricing](https://ollama.com/pricing), and [OpenCode Go usage](https://opencode.ai/docs/console/go). DeepSeek models not explicitly covered by those pricing tables receive no schedule. When a vendor changes a standing schedule, update `Core::Peak::SCHEDULES` and this table together.
 
 ### Timezone handling
 

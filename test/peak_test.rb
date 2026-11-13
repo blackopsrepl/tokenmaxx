@@ -28,6 +28,17 @@ class PeakTest < Minitest::Test
     assert_nil PEAK.model_state("opencode", "kimi-k3", Time.utc(2026, 9, 28, 2, 0))
   end
 
+  def test_deepseek_schedule_scope_excludes_undocumented_models
+    %w[ollama opencode].each do |provider|
+      %w[deepseek-v3 deepseek-r1 deepseek-v5-pro deepseek-v4-pro-unverified].each do |model|
+        assert_nil PEAK.model_state(provider, model, Time.utc(2026, 11, 13, 7)), "#{provider}: #{model}"
+      end
+    end
+    assert_equal "peak", PEAK.model_state("ollama", "deepseek-v4-pro:cloud", Time.utc(2026, 11, 13, 13))[:state]
+    assert_equal "peak", PEAK.model_state("ollama", "deepseek-v4.1-flash:1017-cloud", Time.utc(2026, 11, 13, 13))[:state]
+    assert_nil PEAK.model_state("opencode", "deepseek-v4-pro:cloud", Time.utc(2026, 11, 13, 7))
+  end
+
   def test_providers_without_time_priced_models_have_no_state
     assert_nil PEAK.model_state("codex", "gpt-5.6-sol", Time.utc(2026, 9, 28, 2, 0))
     assert_nil PEAK.provider_state("codex", ["gpt-5.6-sol"], Time.utc(2026, 9, 28, 2, 0))
