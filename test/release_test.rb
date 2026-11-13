@@ -4,6 +4,17 @@ require_relative "test_helper"
 require "open3"
 
 class ReleaseTest < Minitest::Test
+  # `make install` copies INSTALL_FILES only, so a lib file missing from it loads in
+  # the source tree and every test, then crashes the installed daemon on require.
+  def test_install_manifest_ships_every_runtime_source
+    makefile = File.read(File.expand_path("../Makefile", __dir__))
+    manifest = makefile[/^INSTALL_FILES := \\\n((?:\t[^\n]*\\\n)*\t[^\n]*)\n/, 1].to_s.split.reject { |entry| entry == "\\" }
+    root = File.expand_path("..", __dir__)
+    sources = Dir.glob("lib/**/*.rb", base: root) + ["frontend/quickshell/shell.qml", "bin/tokenmaxx"]
+
+    assert_empty sources - manifest, "INSTALL_FILES is missing runtime sources"
+  end
+
   def test_notes_read_only_the_requested_tag_and_fail_closed
     script = File.expand_path("../bin/release-notes", __dir__)
     Dir.mktmpdir("tokenmaxx-release") do |dir|
