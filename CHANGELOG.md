@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.6.2](https://github.com/blackopsrepl/tokenmaxx/compare/v2.6.1...v2.6.2) (2026-11-18)
+
+
+### Bug Fixes
+
+* **oauth:** renew Claude and Gemini logins without spending a refresh token twice ([94eda7f](https://github.com/blackopsrepl/tokenmaxx/commit/94eda7fee019ca460f5b47cc9603f717ecb8ffce))
+
+
+### Documentation
+
+* **oauth:** document the credential renewal contract ([4bc3f3f](https://github.com/blackopsrepl/tokenmaxx/commit/4bc3f3fea70d49f3885f7717d800ae48d6a0d266))
+* **peak:** cite DeepSeek pricing for the OpenCode Go window ([306d8ab](https://github.com/blackopsrepl/tokenmaxx/commit/306d8abfc3deaee9921c9a1c68ac3ddb35d4088b))
+
+
 ## [2.6.1](https://github.com/blackopsrepl/tokenmaxx/compare/v2.6.0...v2.6.1) (2026-11-13)
 
 
