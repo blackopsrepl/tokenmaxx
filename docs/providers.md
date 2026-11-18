@@ -9,6 +9,18 @@ The Linux release supports exactly:
 - `zai`
 - `ollama`
 
+## Credential Renewal
+
+Claude and Gemini quota use the OAuth login their CLI stores on disk. TokenMaxx renews those access tokens through one engine, `Core::OAuthRenewal`, so every provider follows the same rules:
+
+- Renewal starts 5 minutes before the access token expires, the same margin the CLIs use, never after a failed request.
+- Renewal runs under the cross-process locks the owning CLI takes, then re-reads the file. When another client already renewed, TokenMaxx adopts that token and sends nothing.
+- Rotating refresh tokens (Claude) are single-use: a used token that arrives again more than 30 seconds after its first use revokes the whole login. Before the token leaves the process, TokenMaxx records a hold on it in `runtime.stateDir/oauth-holds/<provider>.json`. A dropped answer gets one immediate resend inside the 30-second window. A timeout, a second failure, or `invalid_grant` keeps the hold, and no TokenMaxx process sends that token again. Only a different refresh token in the file, from a new login or another client's renewal, clears the hold. A `429`, a `503` with `retry-after`, or an unreachable endpoint leaves the token unused and lifts the hold.
+- The renewed pair is written atomically (temp file, `fsync`, rename, `0600`) before the new access token is used. All other fields in the file are preserved.
+- When only a new sign-in can recover, the provider error says so and names the command to run.
+
+Codex has no TokenMaxx renewal path: `codex app-server` owns its own login. OpenCode Go, Z.ai, and Ollama Cloud use static API keys.
+
 ## Codex
 
 - Source label: `codex-cli`.
@@ -29,7 +41,8 @@ Local token summaries are read from Codex session JSONL logs by `tokenmaxx cost`
 - Source label: `oauth`.
 - Credentials: `~/.claude/.credentials.json`.
 - Usage endpoint: `https://api.anthropic.com/api/oauth/usage`.
-- Token refresh endpoint: `https://platform.claude.com/v1/oauth/token`.
+- Token refresh endpoint: `https://platform.claude.com/v1/oauth/token`, sent as Claude Code sends it (JSON body with the stored scopes). The response's `refresh_token_expires_in` is stored as `refreshTokenExpiresAt`.
+- Renewal locks: Claude Code's proper-lockfile locks `~/.claude/.oauth_refresh.lock` and `~/.claude.lock`, plus the Hermes flock `~/.claude/.credentials.lock`.
 - Dashboard: `https://claude.ai/`
 
 There is no browser-cookie, secret-store, or CLI scrape in the current Ruby implementation.
@@ -41,6 +54,7 @@ Local token summaries are read from Claude project JSONL logs by `tokenmaxx cost
 - Credentials: `~/.gemini/oauth_creds.json`.
 - Settings: `~/.gemini/settings.json`.
 - OAuth client metadata: discovered from the installed Gemini CLI package or bundled Gemini CLI chunks.
+- Renewal: Google refresh tokens do not rotate, so no hold applies. Gemini CLI takes no lock, so TokenMaxx serializes its own processes with `runtime.stateDir/locks/gemini-oauth.lock`.
 - Project discovery: Code Assist project from `loadCodeAssist`, then Google Cloud project discovery when needed.
 - Quota endpoint: `https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota`.
 - Local usage source: `~/.gemini/tmp/**/chats/*.jsonl`.

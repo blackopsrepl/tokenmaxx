@@ -77,6 +77,8 @@ All files live under `runtime.stateDir`, are owned by Ruby, and are written with
 - `history.json`: daily retained quota/local-usage summaries. Window providers keep primary/secondary/tertiary samples; Gemini meter providers keep per-model quota in `modelQuota` and model usage in `modelUsage` keyed by raw model id without synthesizing window lanes. Local-usage fields (tokens, records, cost, `modelUsage`) are re-merged from the current scan window on every update, so a corrected local scanner repairs already-retained days. Days with neither a quota sample nor local usage are omitted from the presenter's `historyDays`, so a provider with no samples yields the History empty state.
 - `storage.json`: optional provider storage footprint summaries.
 - `notification_state.json`: last notification state to prevent repeated alerts.
+- `oauth-holds/<provider>.json`: fingerprints of refresh tokens TokenMaxx must not send again, each with the reason shown in the provider error. See [Credential Renewal](providers.md#credential-renewal).
+- `locks/`: TokenMaxx-only renewal locks for credential files whose CLI takes no lock (Gemini).
 
 ## Scoped Service Status
 
