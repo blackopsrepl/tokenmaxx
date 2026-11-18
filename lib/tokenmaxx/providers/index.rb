@@ -25,7 +25,7 @@ module TokenMaxx
         }
       end
 
-      fetcher.call(provider_config)
+      fetcher.call(provider_config.merge(stateDir: config.dig(:runtime, :stateDir)))
     end
 
     def fetch_providers(config, providers)

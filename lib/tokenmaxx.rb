@@ -3,6 +3,8 @@
 require_relative "tokenmaxx/core/types"
 require_relative "tokenmaxx/core/config"
 require_relative "tokenmaxx/core/http"
+require_relative "tokenmaxx/core/credential_locks"
+require_relative "tokenmaxx/core/oauth_renewal"
 require_relative "tokenmaxx/core/process"
 require_relative "tokenmaxx/core/metric"
 require_relative "tokenmaxx/core/format"

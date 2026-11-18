@@ -58,9 +58,11 @@ INSTALL_FILES := \
 	lib/tokenmaxx.rb \
 	lib/tokenmaxx/cli.rb \
 	lib/tokenmaxx/core/config.rb \
+	lib/tokenmaxx/core/credential_locks.rb \
 	lib/tokenmaxx/core/format.rb \
 	lib/tokenmaxx/core/http.rb \
 	lib/tokenmaxx/core/metric.rb \
+	lib/tokenmaxx/core/oauth_renewal.rb \
 	lib/tokenmaxx/core/peak.rb \
 	lib/tokenmaxx/core/process.rb \
 	lib/tokenmaxx/core/types.rb \

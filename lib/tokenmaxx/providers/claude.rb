@@ -9,11 +9,12 @@ module TokenMaxx
 
       module_function
 
+      TOKEN_URL = "https://platform.claude.com/v1/oauth/token"
+      LOGIN_HINT = "Run `claude` and `/login` to sign in again."
+
       def fetch(config)
         source = config[:source] == "cli" ? "claude" : "oauth"
-        credentials_path = File.join(Dir.home, ".claude", ".credentials.json")
-        credentials = load_credentials(credentials_path)
-        access_token = resolve_access_token(credentials_path, credentials)
+        access_token, credentials = Core::OAuthRenewal.resolve(credential_store, hold_dir: Core::OAuthRenewal.hold_dir(config))
 
         response = Core::Http.request(
           "GET",
@@ -27,7 +28,7 @@ module TokenMaxx
           }
         )
 
-        raise "Claude OAuth request unauthorized. Run `claude` to re-authenticate." if response.status == 401
+        raise "Claude OAuth request unauthorized. #{LOGIN_HINT}" if response.status == 401
         raise "Claude OAuth error: HTTP #{response.status}" unless response.status.between?(200, 299)
 
         payload = Core::Http.parse_json(response)
@@ -58,47 +59,68 @@ module TokenMaxx
         }
       end
 
-      def load_credentials(credentials_path)
-        parsed = JSON.parse(File.read(credentials_path), symbolize_names: true)
-        unless parsed.dig(:claudeAiOauth, :accessToken).to_s.strip.length.positive?
-          raise "Claude OAuth credentials not found. Run `claude` to log in."
-        end
-
-        parsed
+      def claude_dir
+        File.join(Dir.home, ".claude")
       end
 
-      def resolve_access_token(credentials_path, credentials)
-        oauth = credentials.fetch(:claudeAiOauth)
-        access_token = oauth[:accessToken].to_s.strip
-        raise "Claude OAuth access token missing." if access_token.empty?
+      # Claude Code's own credential file and the locks its renewal takes:
+      # proper-lockfile on `.oauth_refresh.lock` and on the legacy `<dir>.lock`,
+      # plus the flock Hermes takes on `.credentials.lock` for the same file.
+      def credential_store
+        dir = claude_dir
+        real_dir = File.directory?(dir) ? File.realpath(dir) : dir
+        Core::OAuthRenewal::Store.new(
+          id: "claude",
+          label: "Claude",
+          path: File.join(dir, ".credentials.json"),
+          locks: [
+            { kind: :mkdir, path: File.join(dir, ".oauth_refresh.lock") },
+            { kind: :mkdir, path: "#{real_dir}.lock" },
+            { kind: :flock, path: File.join(dir, ".credentials.lock") }
+          ],
+          rotating: true,
+          login_hint: LOGIN_HINT,
+          read_credential: ->(doc) { read_credential(doc) },
+          request: ->(credential, doc) { refresh_request(credential, doc) },
+          apply: ->(doc, body, issued_at) { apply_refresh(doc, body, issued_at) }
+        )
+      end
 
+      def read_credential(doc)
+        oauth = doc[:claudeAiOauth] || {}
         expires_at = oauth[:expiresAt] ? Time.at(oauth[:expiresAt].to_f / 1000.0) : nil
-        return access_token if expires_at.nil? || expires_at > Time.now
-        raise "Claude OAuth token expired and no refresh token is available." if oauth[:refreshToken].to_s.empty?
+        {
+          access_token: oauth[:accessToken].to_s.strip,
+          refresh_token: oauth[:refreshToken].to_s,
+          expires_at: expires_at
+        }
+      end
 
-        response = Core::Http.request(
-          "POST",
-          "https://platform.claude.com/v1/oauth/token",
-          form: {
-            grant_type: "refresh_token",
-            refresh_token: oauth[:refreshToken],
-            client_id: ENV["TOKENMAXX_CLAUDE_OAUTH_CLIENT_ID"] || DEFAULT_CLIENT_ID
-          }
+      # Same request Claude Code sends: JSON body with the stored scopes.
+      def refresh_request(credential, doc)
+        scopes = Array(doc.dig(:claudeAiOauth, :scopes)).map(&:to_s).reject(&:empty?)
+        body = {
+          grant_type: "refresh_token",
+          refresh_token: credential[:refresh_token],
+          client_id: ENV["TOKENMAXX_CLAUDE_OAUTH_CLIENT_ID"] || DEFAULT_CLIENT_ID
+        }
+        body[:scope] = scopes.join(" ") unless scopes.empty?
+        { url: TOKEN_URL, json: body }
+      end
+
+      # Rotates the token triple and keeps every other field Claude Code wrote.
+      def apply_refresh(doc, body, issued_at)
+        issued_ms = (issued_at.to_f * 1000).to_i
+        oauth = (doc[:claudeAiOauth] || {}).merge(
+          accessToken: body[:access_token].to_s,
+          refreshToken: body[:refresh_token] || doc.dig(:claudeAiOauth, :refreshToken),
+          expiresAt: issued_ms + (body[:expires_in] || 3600).to_i * 1000
         )
-        raise "Claude OAuth refresh failed with HTTP #{response.status}." unless response.status.between?(200, 299)
-
-        refreshed = Core::Http.parse_json(response)
-        access_token = refreshed[:access_token].to_s
-        raise "Claude OAuth refresh response did not contain an access token." if access_token.empty?
-
-        credentials[:claudeAiOauth] = oauth.merge(
-          accessToken: access_token,
-          refreshToken: refreshed[:refresh_token] || oauth[:refreshToken],
-          expiresAt: ((Time.now.to_f * 1000).to_i + refreshed.fetch(:expires_in, 3600).to_i * 1000)
-        )
-        File.write(credentials_path, "#{JSON.pretty_generate(credentials)}\n")
-        File.chmod(0o600, credentials_path)
-        access_token
+        if body[:refresh_token_expires_in]
+          oauth[:refreshTokenExpiresAt] = issued_ms + body[:refresh_token_expires_in].to_i * 1000
+        end
+        oauth[:scopes] = body[:scope].to_s.split if body[:scope].is_a?(String) && !body[:scope].strip.empty?
+        doc.merge(claudeAiOauth: oauth)
       end
 
       def make_window(window, minutes)

@@ -24,8 +24,10 @@ module TokenMaxx
           notes << "Gemini CLI selected #{auth_type}; using OAuth credentials for Code Assist quota."
         end
 
-        creds = load_json(creds_path)
-        access_token = resolve_access_token(creds_path, creds)
+        access_token, creds = Core::OAuthRenewal.resolve(
+          credential_store(creds_path, Core::OAuthRenewal.hold_dir(config)),
+          hold_dir: Core::OAuthRenewal.hold_dir(config)
+        )
         claims = decode_jwt_claims(creds[:id_token])
         code_assist = load_code_assist(access_token)
         project_id = extract_project_id(code_assist) || discover_project_id(access_token)
@@ -59,39 +61,58 @@ module TokenMaxx
         }
       end
 
-      def resolve_access_token(creds_path, creds)
-        access_token = creds[:access_token].to_s
-        raise "Gemini OAuth credentials missing access token." if access_token.empty?
+      LOGIN_HINT = "Run `gemini` and sign in with Google again."
+      TOKEN_URL = "https://oauth2.googleapis.com/token"
 
-        expiry_date = creds[:expiry_date].to_i
-        return access_token if expiry_date.zero? || expiry_date > (Time.now.to_f * 1000).to_i
-        raise "Gemini token expired and no refresh token is available." if creds[:refresh_token].to_s.empty?
+      # Gemini CLI takes no lock on oauth_creds.json, so the lock only
+      # serializes TokenMaxx processes. Google refresh tokens do not rotate.
+      def credential_store(creds_path, hold_dir)
+        Core::OAuthRenewal::Store.new(
+          id: "gemini",
+          label: "Gemini",
+          path: creds_path,
+          locks: [{ kind: :flock, path: File.join(hold_dir, "locks", "gemini-oauth.lock") }],
+          rotating: false,
+          login_hint: LOGIN_HINT,
+          read_credential: ->(doc) { read_credential(doc) },
+          request: ->(credential, _doc) { refresh_request(credential) },
+          apply: ->(doc, body, issued_at) { apply_refresh(doc, body, issued_at) }
+        )
+      end
 
+      def read_credential(doc)
+        expiry = doc[:expiry_date].to_i
+        {
+          access_token: doc[:access_token].to_s,
+          refresh_token: doc[:refresh_token].to_s,
+          expires_at: expiry.zero? ? nil : Time.at(expiry / 1000.0)
+        }
+      end
+
+      def refresh_request(credential)
         oauth_client = find_oauth_client
-        raise "Could not find Gemini CLI OAuth client metadata for token refresh." unless oauth_client
+        raise Core::OAuthRenewal::RenewalFailed, "Could not find Gemini CLI OAuth client metadata for token refresh." unless oauth_client
 
-        response = Core::Http.request(
-          "POST",
-          "https://oauth2.googleapis.com/token",
+        {
+          url: TOKEN_URL,
           form: {
             client_id: oauth_client[:clientId],
             client_secret: oauth_client[:clientSecret],
-            refresh_token: creds[:refresh_token],
+            refresh_token: credential[:refresh_token],
             grant_type: "refresh_token"
           }
+        }
+      end
+
+      def apply_refresh(doc, body, issued_at)
+        renewed = doc.merge(
+          access_token: body[:access_token].to_s,
+          expiry_date: (issued_at.to_f * 1000).to_i + (body[:expires_in] || 3600).to_i * 1000
         )
-        raise "Gemini token refresh failed with HTTP #{response.status}." unless response.status.between?(200, 299)
-
-        refreshed = Core::Http.parse_json(response)
-        new_access_token = refreshed[:access_token].to_s
-        raise "Gemini token refresh did not return an access token." if new_access_token.empty?
-
-        creds[:access_token] = new_access_token
-        creds[:expiry_date] = (Time.now.to_f * 1000).to_i + refreshed.fetch(:expires_in, 3600).to_i * 1000
-        creds[:id_token] = refreshed[:id_token] if refreshed[:id_token]
-        File.write(creds_path, "#{JSON.pretty_generate(creds)}\n")
-        File.chmod(0o600, creds_path)
-        new_access_token
+        %i[id_token refresh_token scope token_type].each do |key|
+          renewed[key] = body[key] if body[key]
+        end
+        renewed
       end
 
       def load_code_assist(access_token)

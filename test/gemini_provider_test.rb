@@ -3,6 +3,36 @@
 require_relative "test_helper"
 
 class GeminiProviderTest < Minitest::Test
+  def test_renewal_keeps_the_non_rotating_refresh_token_and_gemini_fields
+    Dir.mktmpdir("tokenmaxx-gemini-creds") do |dir|
+      path = File.join(dir, "oauth_creds.json")
+      File.write(path, JSON.generate(access_token: "old", refresh_token: "google-rt", id_token: "old-id",
+                                     scope: "openid", token_type: "Bearer",
+                                     expiry_date: ((Time.now.to_f - 60) * 1000).to_i))
+      store = TokenMaxx::Providers::Gemini.credential_store(path, dir)
+      requests = []
+      endpoint = Object.new
+      endpoint.define_singleton_method(:request) do |_method, url, **options|
+        requests << options.merge(url: url)
+        TokenMaxx::Core::Http::Response.new(status: 200, headers: {},
+                                             body: JSON.generate(access_token: "new", expires_in: 3599, id_token: "new-id"))
+      end
+
+      TokenMaxx::Providers::Gemini.stub(:find_oauth_client, { clientId: "cid", clientSecret: "secret" }) do
+        token, doc = TokenMaxx::Core::OAuthRenewal.resolve(store, hold_dir: dir, http: endpoint)
+
+        assert_equal "new", token
+        assert_equal "google-rt", doc[:refresh_token]
+        assert_equal "new-id", doc[:id_token]
+        assert_equal "openid", doc[:scope]
+      end
+      assert_equal "https://oauth2.googleapis.com/token", requests.first[:url]
+      assert_equal "google-rt", requests.first.dig(:form, :refresh_token)
+      refute store.rotating
+      assert_equal "new", JSON.parse(File.read(path))["access_token"]
+    end
+  end
+
   def test_oauth_client_is_read_from_bundled_gemini_cli_install
     Dir.mktmpdir("tokenmaxx-gemini-cli") do |dir|
       prefix = File.join(dir, "usr", "local")
